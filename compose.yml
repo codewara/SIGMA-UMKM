@@ -1,0 +1,31 @@
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: sigma-mongo
+    ports:
+      - "27018:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD}
+    volumes:
+      - mongo-data:/data/db
+    env_file:
+      - .env
+
+  cassandra:
+    image: cassandra:latest
+    container_name: sigma-cassandra
+    ports:
+      - "9043:9042"
+    environment:
+      - CASSANDRA_USER=${CASSANDRA_USERNAME}
+      - CASSANDRA_PASSWORD=${CASSANDRA_PASSWORD}
+      - CASSANDRA_CLUSTER_NAME=SigmaCluster
+    volumes:
+      - cassandra-data:/var/lib/cassandra
+    env_file:
+      - .env
+
+volumes:
+  mongo-data:
+  cassandra-data:
