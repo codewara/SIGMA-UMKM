@@ -5,7 +5,7 @@
    SCENARIO: Tren kenaikan saat Lebaran (April)
    ====================================================== */
 
-USE simba_umkm;
+USE sigma_ks;
 
 -- ======================================================
 -- 1. TABLE: UMKM_FINANCIAL_LOG (DETAIL TRANSAKSI)

@@ -5,13 +5,13 @@
    ====================================================== */
 
 -- 1. SETUP KEYSPACE
-CREATE KEYSPACE IF NOT EXISTS simba_umkm 
+CREATE KEYSPACE IF NOT EXISTS sigma_ks 
 WITH replication = {
     'class': 'SimpleStrategy', 
     'replication_factor': 1
 };
 
-USE simba_umkm;
+USE sigma_ks;
 
 -- 2. CREATE TABLES
 
