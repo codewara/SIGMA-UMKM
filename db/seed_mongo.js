@@ -7,7 +7,7 @@
 
 // 1. SELECT DATABASE
 // Perintah ini setara dengan 'USE simba_umkm' di SQL
-db = db.getSiblingDB('sigma_umkm');
+db = db.getSiblingDB('sigma_db');
 
 // 2. CLEANUP (Hapus data lama biar gak duplikat error)
 db.umkm_profiles.drop();
