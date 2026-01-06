@@ -19,7 +19,7 @@ db.umkm_profiles.drop();
 db.umkm_profiles.insertMany([
   // === KULINER (4 Data) ===
   {
-    "_id": "UMKM_001", // SYNC: Harus sama dengan Cassandra
+    "_id": UUID("17b3e4b8-62b2-4d97-b0cf-9da1addab974"), // SYNC: Harus sama dengan Cassandra
     "nama_usaha": "Soto Cak Har",
     "sektor": "Kuliner",
     "tanggal_bergabung": new Date("2023-01-15"),
@@ -49,7 +49,7 @@ db.umkm_profiles.insertMany([
     }
   },
   {
-    "_id": "UMKM_002",
+    "_id": UUID("95ff4e68-c0ba-40aa-a13d-c5bcfaec5f2b"),
     "nama_usaha": "Kopi Kenangan Mantan",
     "sektor": "Kuliner",
     "tanggal_bergabung": new Date("2023-03-10"),
@@ -71,7 +71,7 @@ db.umkm_profiles.insertMany([
     "summary_terakhir": { "omzet_terakhir": 18000000, "bulan": 6 }
   },
   {
-    "_id": "UMKM_003",
+    "_id": UUID("1f445d1b-858d-4658-b2db-3425c7fceda8"),
     "nama_usaha": "Keripik Buah Batu",
     "sektor": "Kuliner",
     "tanggal_bergabung": new Date("2023-05-20"),
@@ -89,7 +89,7 @@ db.umkm_profiles.insertMany([
     "summary_terakhir": { "omzet_terakhir": 15000000, "bulan": 6 }
   },
   {
-    "_id": "UMKM_004",
+    "_id": UUID("86c103ca-afcd-43d9-b735-178a8afe4076"),
     "nama_usaha": "Martabak Sultan",
     "sektor": "Kuliner",
     "tanggal_bergabung": new Date("2022-11-11"),
@@ -109,7 +109,7 @@ db.umkm_profiles.insertMany([
 
   // === FASHION (3 Data) ===
   {
-    "_id": "UMKM_005",
+    "_id": UUID("37fd6395-e5d4-4e78-8920-a911abd96e41"),
     "nama_usaha": "Batik Tulis Madura",
     "sektor": "Fashion",
     "tanggal_bergabung": new Date("2021-08-17"),
@@ -126,7 +126,7 @@ db.umkm_profiles.insertMany([
     "summary_terakhir": { "omzet_terakhir": 75000000, "bulan": 6 }
   },
   {
-    "_id": "UMKM_006",
+    "_id": UUID("da15948b-8dd8-4d77-87ba-e050fda8cff0"),
     "nama_usaha": "Distro Jaksel",
     "sektor": "Fashion",
     "tanggal_bergabung": new Date("2023-01-01"),
@@ -143,7 +143,7 @@ db.umkm_profiles.insertMany([
     "summary_terakhir": { "omzet_terakhir": 112000000, "bulan": 6 }
   },
   {
-    "_id": "UMKM_007",
+    "_id": UUID("37d4da44-831b-4534-bd4b-bcdadddbfb26"),
     "nama_usaha": "Sepatu Cibaduyut",
     "sektor": "Fashion",
     "tanggal_bergabung": new Date("2022-05-05"),
@@ -162,7 +162,7 @@ db.umkm_profiles.insertMany([
 
   // === JASA (2 Data) ===
   {
-    "_id": "UMKM_008",
+    "_id": UUID("e5a01f76-3cb8-41b3-bbf0-529fcd9e278d"),
     "nama_usaha": "Laundry Cepat",
     "sektor": "Jasa",
     "tanggal_bergabung": new Date("2024-01-01"),
@@ -178,7 +178,7 @@ db.umkm_profiles.insertMany([
     "summary_terakhir": { "omzet_terakhir": 9000000, "bulan": 6 }
   },
   {
-    "_id": "UMKM_009",
+    "_id": UUID("89d522e0-3020-425f-8f55-4b6b126b81a2"),
     "nama_usaha": "Barbershop Ganteng",
     "sektor": "Jasa",
     "tanggal_bergabung": new Date("2023-12-12"),
@@ -196,7 +196,7 @@ db.umkm_profiles.insertMany([
 
   // === KRIYA (1 Data) ===
   {
-    "_id": "UMKM_010",
+    "_id": UUID("201697a6-6746-4076-8532-59f49ce9f6d2"),
     "nama_usaha": "Rotan Indah",
     "sektor": "Kriya",
     "tanggal_bergabung": new Date("2020-02-20"),

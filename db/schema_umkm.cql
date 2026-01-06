@@ -19,7 +19,7 @@ USE sigma_ks;
 -- Partition Key: (umkm_id, tahun) -> Data 1 tahun kumpul jadi satu
 -- Clustering Key: bulan DESC -> Data terbaru paling atas
 CREATE TABLE umkm_financial_log (
-    umkm_id text,
+    umkm_id uuid,
     tahun int,
     bulan int,
     tgl_input timestamp,
@@ -54,7 +54,7 @@ CREATE TABLE dashboard_region_stats (
 
 -- Table 4: AI Analysis Results
 CREATE TABLE analysis_umkm_growth (
-    umkm_id text,
+    umkm_id uuid,
     periode text, -- e.g., '2024-Q1'
     growth_rate float,
     status_kesehatan text,
