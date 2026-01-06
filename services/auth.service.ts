@@ -31,7 +31,7 @@ export async function authenticateUser(email: string, pass: string, ip: string, 
         // Log Audit
         await cassandra.execute(
             'INSERT INTO login_logs (user_id, login_time, status, ip_address, device_info) VALUES (?, toTimestamp(now()), ?, ?, ?)',
-            [user ? user._id : uuidv4(), 'failed', ip, userAgent], { prepare: true }
+            [user!._id.toString(), 'failed', ip, userAgent], { prepare: true }
         );
         return null;
     }
@@ -109,7 +109,7 @@ export async function sendEmail(to: string, token: string) {
         html: `
         <p>
           Please verify your email by clicking the following link:
-          <a href="${process.env.NEXT_PUBLIC_BASE_URL}/verify?token=${token}">
+          <a href="${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/verify-email?token=${token}">
             Verify Email
           </a>
         </p>
