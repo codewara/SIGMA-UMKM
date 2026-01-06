@@ -1,18 +1,22 @@
 import { connectMongo } from "@/lib/db";
 import { umkmUpdateSchema } from "@/lib/validation/umkm_profile.schema";
-import { ObjectId } from "mongodb";
+import { UUID } from "mongodb";
 import { NextRequest, NextResponse } from "next/server";
+
+type UmkmProfile = {
+    _id : UUID;
+}
 
 // get profile umkm by id
 export async function GET(req: NextRequest, context: { params: Promise<{ id: string }>}) {
     const { id } = await context.params; 
     const db = await connectMongo();
 
-    const umkmCollection = db.collection("umkm_profiles");
-    const umkm = await umkmCollection.findOne({ _id: new ObjectId(id) });
+    const umkmCollection = db.collection<UmkmProfile>("umkm_profiles");
+    const umkm = await umkmCollection.findOne({ _id: new UUID(id) });
     if (!umkm) {
         return NextResponse.json(
-            { error: "UMKM not found" },
+            { error: "UMKM not found", id},
             { status: 404 }
         );
     }
@@ -24,7 +28,7 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
     try{
         const { id } = await context.params;
         const db = await connectMongo();
-        const umkmCollection = db.collection("umkm_profiles");
+        const umkmCollection = db.collection<UmkmProfile>("umkm_profiles");
 
         const reqBody = await req.json();
 
@@ -32,7 +36,7 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
         const parsed = umkmUpdateSchema.partial().parse(reqBody);
 
         const result = await umkmCollection.findOneAndUpdate(
-            {_id: new ObjectId(id)},
+            { _id: new UUID(id) },
             { $set: parsed },
             { returnDocument: "after" }
         );
@@ -57,9 +61,9 @@ export async function DELETE(req: NextRequest, context: { params: Promise<{ id: 
     try {
         const { id } = await context.params;
         const db = await connectMongo();
-        const collection = db.collection("umkm_profiles");
+        const collection = db.collection<UmkmProfile>("umkm_profiles");
 
-        const result = await collection.deleteOne({_id: new ObjectId(id)});
+        const result = await collection.deleteOne({ _id: new UUID(id) });
         return NextResponse.json(
             { message: "UMKM Berhasil Dihapus", deletedCount: result.deletedCount },
             { status: 200 }

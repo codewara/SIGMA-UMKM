@@ -42,7 +42,6 @@ export async function POST(req: NextRequest) {
                 { status: 400 }
             );
         }
-
         return NextResponse.json(
             { error: "Failed to create UMKM" },
             { status: 500 }
