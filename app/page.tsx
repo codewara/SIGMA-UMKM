@@ -1,7 +1,20 @@
 'use client';
 
-import { Plus, Search, Eye, MapPin, TrendingUp, LogOut, Menu, X, Sparkles, Award, Users, BarChart3 } from 'lucide-react';
+import { Plus, Search, Eye, MapPin, TrendingUp, LogOut, Menu, X, Sparkles, Award, Users, BarChart3, Star } from 'lucide-react';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+
+interface UMKM {
+  id: number;
+  name: string;
+  category: string;
+  location: string;
+  revenue: string;
+  growth: string;
+  status: string;
+  icon: string;
+  badge: string;
+}
 
 export default function HomePage() {
   const router = useRouter();
@@ -17,7 +30,7 @@ export default function HomePage() {
     description: '',
   });
 
-  const umkmMilikSaya = [];
+  const umkmMilikSaya: UMKM[] = [];
 
   const umkmLain = [
     {
@@ -83,15 +96,15 @@ export default function HomePage() {
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {/* Floating orbs */}
         <div className="absolute top-20 left-10 w-72 h-72 bg-blue-500/30 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute top-40 right-20 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl animate-pulse" style={{animationDelay: '1s'}}></div>
-        <div className="absolute bottom-20 left-1/4 w-80 h-80 bg-pink-500/25 rounded-full blur-3xl animate-pulse" style={{animationDelay: '2s'}}></div>
-        
+        <div className="absolute top-40 right-20 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+        <div className="absolute bottom-20 left-1/4 w-80 h-80 bg-pink-500/25 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
+
         {/* Sparkle particles */}
         <div className="absolute top-32 right-1/4 w-2 h-2 bg-cyan-300 rounded-full animate-ping"></div>
-        <div className="absolute top-48 right-1/3 w-1.5 h-1.5 bg-pink-300 rounded-full animate-ping" style={{animationDelay: '0.5s'}}></div>
-        <div className="absolute top-64 right-1/2 w-2 h-2 bg-blue-300 rounded-full animate-ping" style={{animationDelay: '1s'}}></div>
-        <div className="absolute top-96 left-1/3 w-1 h-1 bg-purple-300 rounded-full animate-ping" style={{animationDelay: '1.5s'}}></div>
-        
+        <div className="absolute top-48 right-1/3 w-1.5 h-1.5 bg-pink-300 rounded-full animate-ping" style={{ animationDelay: '0.5s' }}></div>
+        <div className="absolute top-64 right-1/2 w-2 h-2 bg-blue-300 rounded-full animate-ping" style={{ animationDelay: '1s' }}></div>
+        <div className="absolute top-96 left-1/3 w-1 h-1 bg-purple-300 rounded-full animate-ping" style={{ animationDelay: '1.5s' }}></div>
+
         {/* Gradient mesh */}
         <div className="absolute top-0 left-0 w-full h-full opacity-30">
           <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-to-br from-cyan-400 to-transparent rounded-full blur-2xl"></div>
@@ -152,14 +165,14 @@ export default function HomePage() {
                 <Sparkles className="w-4 h-4 text-cyan-300" />
                 <span className="text-cyan-200 text-sm font-semibold">Platform UMKM Terpadu</span>
               </div>
-              
+
               <h1 className="text-5xl md:text-7xl font-extrabold text-white mb-6 leading-tight">
                 Sigmaaahhh{' '}
                 <span className="bg-gradient-to-r from-cyan-300 via-purple-300 to-pink-300 bg-clip-text text-transparent">
                   UMKM PLATFORM
                 </span>
               </h1>
-              
+
               <p className="text-xl text-gray-300 mb-8 leading-relaxed">
                 Kelola dan kembangkan bisnis UMKM Anda dengan lebih mudah dan efisien di satu tempat.
               </p>
@@ -196,23 +209,23 @@ export default function HomePage() {
               <div className="relative">
                 {/* Glow effect */}
                 <div className="absolute inset-0 bg-gradient-to-br from-cyan-400 via-purple-500 to-pink-500 blur-3xl opacity-50 animate-pulse"></div>
-                
+
                 {/* Monitor/Card */}
                 <div className="relative w-80 h-96 bg-gradient-to-br from-white/20 to-white/5 backdrop-blur-2xl rounded-3xl border border-white/30 shadow-2xl p-6 transform hover:scale-105 transition-transform duration-500">
                   <div className="absolute top-4 right-4">
                     <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse shadow-lg shadow-green-400/50"></div>
                   </div>
-                  
+
                   <div className="text-white/80 text-sm font-semibold mb-4">REVENUE REPORT</div>
-                  
+
                   {/* Chart simulation */}
                   <div className="space-y-4 mb-6">
                     {[85, 72, 95, 68, 90].map((width, i) => (
                       <div key={i} className="flex items-center space-x-3">
                         <div className="flex-1 h-3 bg-white/10 rounded-full overflow-hidden">
-                          <div 
+                          <div
                             className="h-full bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 rounded-full shadow-lg animate-pulse"
-                            style={{width: `${width}%`, animationDelay: `${i * 0.2}s`}}
+                            style={{ width: `${width}%`, animationDelay: `${i * 0.2}s` }}
                           ></div>
                         </div>
                         <span className="text-white/60 text-xs font-mono">{width}%</span>
@@ -235,10 +248,9 @@ export default function HomePage() {
 
                 {/* Decorative elements */}
                 <div className="absolute -bottom-8 -left-8 w-24 h-24 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-full blur-2xl opacity-60 animate-pulse"></div>
-                <div className="absolute -top-8 -right-8 w-32 h-32 bg-gradient-to-br from-pink-400 to-purple-500 rounded-full blur-2xl opacity-60 animate-pulse" style={{animationDelay: '1s'}}></div>
-                
+                <div className="absolute -top-8 -right-8 w-32 h-32 bg-gradient-to-br from-pink-400 to-purple-500 rounded-full blur-2xl opacity-60 animate-pulse" style={{ animationDelay: '1s' }}></div>
                 {/* Small floating card */}
-                <div className="absolute -left-16 top-32 w-32 h-32 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 p-3 shadow-xl animate-pulse" style={{animationDelay: '0.5s'}}>
+                <div className="absolute -left-16 top-32 w-32 h-32 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 p-3 shadow-xl animate-pulse" style={{ animationDelay: '0.5s' }}>
                   <div className="text-white/60 text-xs mb-2">Today</div>
                   <div className="text-2xl">💰</div>
                   <div className="text-white font-bold text-sm mt-1">Rp 450K</div>
@@ -301,7 +313,7 @@ export default function HomePage() {
                       <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
                       <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12"></div>
                       <div className="relative">
-                        
+
                         <h3 className="text-2xl font-bold leading-tight mb-3">{umkm.name}</h3>
                         <div className="inline-block bg-white/30 backdrop-blur-sm px-3 py-1.5 rounded-full text-sm font-semibold">
                           {umkm.badge}
@@ -329,12 +341,12 @@ export default function HomePage() {
                         </div>
                       </div>
 
-                     <button 
-                      onClick={() => router.push(`/umkm/${umkm.id}`)} 
-                      className="w-full bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 text-white px-8 py-5 rounded-2xl font-bold text-base transition transform hover:scale-[1.02] shadow-xl mt-8 uppercase tracking-widest"
-                    >
-                      Lihat Detail
-                    </button>
+                      <button
+                        onClick={() => router.push(`/umkm/${umkm.id}`)}
+                        className="w-full bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 text-white px-8 py-5 rounded-2xl font-bold text-base transition transform hover:scale-[1.02] shadow-xl mt-8 uppercase tracking-widest"
+                      >
+                        Lihat Detail
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -352,53 +364,53 @@ export default function HomePage() {
         <div>
           <h2 className="text-3xl font-bold text-gray-900 mb-8">🌐 Semua UMKM</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {umkmLain.map((umkm) => (
-                <div key={umkm.id} className="group relative">
-                  <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 rounded-3xl blur-xl opacity-20 group-hover:opacity-40 transition"></div>
-                  <div className="relative bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all transform hover:-translate-y-1">
-                    {/* Card Header */}
-                    <div className="relative bg-blue-500 p-4 text-white overflow-hidden">
-                      <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-12 -mt-12"></div>
-                      <div className="absolute bottom-0 left-0 w-16 h-16 bg-white/10 rounded-full -ml-8 -mb-8"></div>
-                      <div className="relative flex items-start space-x-3">
-                        <div className="text-2xl flex-shrink-0 mt-1">{umkm.icon}</div>
-                        <div className="flex-1">
-                          <h3 className="text-base font-bold leading-tight text-white">{umkm.name}</h3>
-                          <p className="text-blue-100 text-xs mt-0.5">{umkm.category}</p>
-                        </div>
-                        <div className="inline-block bg-white/30 backdrop-blur-sm px-2 py-0.5 rounded-full text-xs font-semibold text-white flex-shrink-0">
-                          {umkm.badge}
-                        </div>
+            {umkmLain.map((umkm) => (
+              <div key={umkm.id} className="group relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 rounded-3xl blur-xl opacity-20 group-hover:opacity-40 transition"></div>
+                <div className="relative bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all transform hover:-translate-y-1">
+                  {/* Card Header */}
+                  <div className="relative bg-blue-500 p-4 text-white overflow-hidden">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-12 -mt-12"></div>
+                    <div className="absolute bottom-0 left-0 w-16 h-16 bg-white/10 rounded-full -ml-8 -mb-8"></div>
+                    <div className="relative flex items-start space-x-3">
+                      <div className="text-2xl flex-shrink-0 mt-1">{umkm.icon}</div>
+                      <div className="flex-1">
+                        <h3 className="text-base font-bold leading-tight text-white">{umkm.name}</h3>
+                        <p className="text-blue-100 text-xs mt-0.5">{umkm.category}</p>
+                      </div>
+                      <div className="inline-block bg-white/30 backdrop-blur-sm px-2 py-0.5 rounded-full text-xs font-semibold text-white flex-shrink-0">
+                        {umkm.badge}
                       </div>
                     </div>
+                  </div>
 
-                    {/* Card Body */}
-                    <div className="p-4">
-                      <div className="space-y-3">
-                        <div className="flex items-center space-x-2 text-gray-600">
-                          <MapPin className="w-4 h-4 text-purple-600 flex-shrink-0" />
-                          <span className="text-sm font-medium">{umkm.location}</span>
-                        </div>
-                        <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-3">
-                          <p className="text-gray-600 text-xs font-medium mb-1">Pendapatan Bulan Ini</p>
-                          <div className="flex items-center justify-between">
-                            <p className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">{umkm.revenue}</p>
-                            <div className={`text-lg font-bold flex items-center ${umkm.growth.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>
-                              <TrendingUp className="w-4 h-4 mr-1" />
-                              {umkm.growth}
-                            </div>
+                  {/* Card Body */}
+                  <div className="p-4">
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-2 text-gray-600">
+                        <MapPin className="w-4 h-4 text-purple-600 flex-shrink-0" />
+                        <span className="text-sm font-medium">{umkm.location}</span>
+                      </div>
+                      <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-3">
+                        <p className="text-gray-600 text-xs font-medium mb-1">Pendapatan Bulan Ini</p>
+                        <div className="flex items-center justify-between">
+                          <p className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">{umkm.revenue}</p>
+                          <div className={`text-lg font-bold flex items-center ${umkm.growth.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>
+                            <TrendingUp className="w-4 h-4 mr-1" />
+                            {umkm.growth}
                           </div>
                         </div>
                       </div>
                     </div>
-
-                    <button 
-                      onClick={() => router.push(`/umkm/${umkm.id}`)} 
-                      className="w-full bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 text-white px-8 py-5 rounded-2xl font-bold text-base transition transform hover:scale-[1.02] shadow-xl mt-8 uppercase tracking-widest"
-                    >
-                      Lihat Detail
-                    </button>
                   </div>
+
+                  {/* Card Footer */}
+                  <button
+                    onClick={() => router.push(`/umkm/${umkm.id}`)}
+                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-8 py-5 rounded-2xl font-bold text-base transition transform hover:scale-[1.02] shadow-xl mt-8 uppercase tracking-widest"
+                  >
+                    Lihat Detail
+                  </button>
                 </div>
               </div>
             ))}
