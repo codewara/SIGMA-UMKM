@@ -82,6 +82,57 @@ export async function registerUser(email: string, pass: string) {
         created_at: new Date(),
         expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
     });
+    const token = await generateToken(userId, "email_verification");
+    await sendEmail(email, token);
 
     return { userId };
+}
+
+// Generate Temporary Token
+export async function generateToken(userId: string, type: string) {
+    const cassandra = await connectCassandra();
+    const token = uuidv4();
+
+    await cassandra.execute(
+        'INSERT INTO temp_tokens (token_value, user_id, purpose) VALUES (?, ?, ?)',
+        [token, userId, type], { prepare: true }
+    );
+    return token;
+}
+
+// Send Verification Email
+export async function sendEmail(to: string, token: string) {
+    await transporter.sendMail({
+        from: "SIGMA UMKM <no-reply@sigma-umkm.com>",
+        to,
+        subject: "SIGMA UMKM - Verify Your Email",
+        html: `
+        <p>
+          Please verify your email by clicking the following link:
+          <a href="${process.env.NEXT_PUBLIC_BASE_URL}/verify?token=${token}">
+            Verify Email
+          </a>
+        </p>
+        `,
+    });
+}
+
+// Email Verification
+export async function verifyEmail(token: string) {
+    const mongo = await connectMongo();
+    const cassandra = await connectCassandra();
+
+    const result = await cassandra.execute(
+        'SELECT user_id FROM temp_tokens WHERE token_value = ? AND purpose = ? ALLOW FILTERING',
+        [token, 'email_verification'], { prepare: true }
+    );
+
+    if (!result.rows.length) throw new Error("INVALID_TOKEN");
+    const userId = result.rows[0].user_id;
+
+    await mongo.collection("users").updateOne(
+        // @ts-expect-error cast _id to UUID
+        { _id: new UUID(userId.toString()) },
+        { $set: { account_status: "active" }, $unset: { expires_at: "" } }
+    );
 }
