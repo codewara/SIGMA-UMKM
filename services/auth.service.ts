@@ -74,6 +74,17 @@ export async function authenticateUser(email: string, pass: string, ip: string, 
     return { user, token: sessionToken };
 }
 
+// Logout User
+export async function logoutUser(sessionToken: string) {
+    const [mongo, cookieStore] = await Promise.all([connectMongo(), cookies()]);
+    
+    cookieStore.delete("session_token");
+    await mongo.collection("sessions").deleteOne({ 
+        // @ts-expect-error cast _id to UUID
+        _id: new UUID(sessionToken) 
+    });
+}
+
 // Register User
 export async function registerUser(email: string, pass: string) {
     const mongo = await connectMongo();
