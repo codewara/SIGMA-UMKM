@@ -1,5 +1,8 @@
 import { Db, MongoClient, ServerApiVersion } from "mongodb";
 import cassandra from 'cassandra-driver';
+import { GlobalDB } from "@/lib/types";
+
+const g = global as unknown as GlobalDB;
 
 const MONGO_URI = process.env.MONGO_URI;
 const MONGO_COLLECTION = process.env.MONGO_COLLECTION;
@@ -23,25 +26,16 @@ const mongoClient = new MongoClient(MONGO_URI, {
     socketTimeoutMS: 45000,
 });
 
-let mongoInstance: Db | null = null;
-
 export async function connectMongo(): Promise<Db> {
-    if (mongoInstance) return mongoInstance;
+    if (g.mongoDb) return g.mongoDb;
 
-    try {
-        await mongoClient.connect();
-        await mongoClient.db("admin").command({ ping: 1 });
+    if (!g.mongoClient) {
+        g.mongoClient = mongoClient;
+        await g.mongoClient.connect();
         console.log("Connected to MongoDB");
-        mongoInstance = mongoClient.db(MONGO_COLLECTION);
-        return mongoInstance;
-    } catch (error) {
-        console.error("DB Connection Error:", error);
-        throw error;
     }
-}
-
-export async function closeMongo() {
-    await mongoClient.close();
+    g.mongoDb = g.mongoClient.db(MONGO_COLLECTION);
+    return g.mongoDb;
 }
 
 const cassandraClient = new cassandra.Client({
@@ -52,16 +46,15 @@ const cassandraClient = new cassandra.Client({
 });
 
 export async function connectCassandra(): Promise<cassandra.Client> {
-    try {
-        await cassandraClient.connect();
-        console.log("Connected to Cassandra");
-        return cassandraClient;
-    } catch (error) {
-        console.error("Cassandra Connection Error:", error);
-        throw error;
-    }
+    if (g.cassandraClient) return g.cassandraClient;
+
+    g.cassandraClient = cassandraClient;
+    await g.cassandraClient.connect();
+    console.log("Connected to Cassandra");
+    return g.cassandraClient;
 }
 
-export async function closeCassandra() {
-    await cassandraClient.shutdown();
+export async function closeDB() {
+    if (g.mongoClient) await g.mongoClient.close();
+    if (g.cassandraClient) await g.cassandraClient.shutdown();
 }
