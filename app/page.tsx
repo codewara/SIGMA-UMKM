@@ -1,28 +1,23 @@
 'use client';
 
-import { Plus, Search, Eye, MapPin, TrendingUp, LogOut, Menu, X, Award, Users, BarChart3, Sparkles, Star } from 'lucide-react';
+import { Plus, Search, Eye, MapPin, TrendingUp, LogOut, Menu, X, Sparkles, Award, Users, BarChart3 } from 'lucide-react';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 
 export default function HomePage() {
   const router = useRouter();
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showRegistrationForm, setShowRegistrationForm] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    category: '',
+    location: '',
+    phone: '',
+    email: '',
+    description: '',
+  });
 
-  const umkmMilikSaya = [
-    {
-      id: 1,
-      name: 'Sociolla',
-      category: 'Kosmetik & Skincare',
-      location: 'Jakarta Selatan',
-      phone: '(021) 7234-5678',
-      email: 'hello@sociolla.com',
-      revenue: 'Rp 450.8M',
-      growth: '+12.5%',
-      status: 'Aktif',
-      badge: 'Trending'
-    }
-  ];
+  const umkmMilikSaya = [];
 
   const umkmLain = [
     {
@@ -33,6 +28,7 @@ export default function HomePage() {
       revenue: 'Rp 180.2M',
       growth: '+8.3%',
       status: 'Aktif',
+      icon: '🎨',
       badge: 'Populer'
     },
     {
@@ -43,6 +39,7 @@ export default function HomePage() {
       revenue: 'Rp 95.8M',
       growth: '-2.1%',
       status: 'Aktif',
+      icon: '👕',
       badge: 'Baru'
     },
     {
@@ -53,6 +50,7 @@ export default function HomePage() {
       revenue: 'Rp 142.3M',
       growth: '+5.7%',
       status: 'Aktif',
+      icon: '🧵',
       badge: 'Terverifikasi'
     },
     {
@@ -63,6 +61,7 @@ export default function HomePage() {
       revenue: 'Rp 320.7M',
       growth: '+15.2%',
       status: 'Aktif',
+      icon: '☕',
       badge: 'Trending'
     },
   ];
@@ -73,6 +72,10 @@ export default function HomePage() {
     { label: 'Pertumbuhan', value: '+23.5%', icon: TrendingUp, color: 'from-purple-400 to-purple-600' },
     { label: 'UMKM Terverifikasi', value: '892', icon: Award, color: 'from-pink-400 to-pink-600' },
   ];
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(amount);
+  }
 
   return (
     <div className="min-h-screen bg-blue-950 relative overflow-hidden">
@@ -347,47 +350,43 @@ export default function HomePage() {
 
         {/* Semua UMKM Section */}
         <div>
-          <h2 className="text-4xl font-bold text-white mb-10 flex items-center">
-            <span className="mr-3">🌐</span>
-            Semua UMKM
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {umkmLain.map((umkm) => (
-              <div key={umkm.id} className="group relative h-full">
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-pink-500 rounded-3xl blur-2xl opacity-20 group-hover:opacity-40 transition-opacity"></div>
-                <div className="relative bg-white/10 backdrop-blur-2xl rounded-3xl border border-white/30 shadow-xl overflow-hidden hover:shadow-2xl transition-all transform hover:-translate-y-2 h-full flex flex-col min-h-96">
-                  {/* Header */}
-                  <div className="relative bg-blue-900 p-6 text-white overflow-hidden h-32">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
-                    <div className="absolute bottom-0 left-0 w-20 h-20 bg-white/10 rounded-full -ml-10 -mb-10"></div>
-                    <div className="relative flex items-start space-x-4 h-full">
-                      <div className="text-3xl flex-shrink-0 mt-1">{umkm.icon}</div>
-                      <div className="flex-1 flex flex-col justify-between">
-                        <div>
-                          <h3 className="text-lg font-bold leading-tight text-white mb-1 line-clamp-2 h-14">{umkm.name}</h3>
-                          <p className="text-pink-100 text-sm line-clamp-1">{umkm.category}</p>
+          <h2 className="text-3xl font-bold text-gray-900 mb-8">🌐 Semua UMKM</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {umkmLain.map((umkm) => (
+                <div key={umkm.id} className="group relative">
+                  <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 rounded-3xl blur-xl opacity-20 group-hover:opacity-40 transition"></div>
+                  <div className="relative bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all transform hover:-translate-y-1">
+                    {/* Card Header */}
+                    <div className="relative bg-blue-500 p-4 text-white overflow-hidden">
+                      <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-12 -mt-12"></div>
+                      <div className="absolute bottom-0 left-0 w-16 h-16 bg-white/10 rounded-full -ml-8 -mb-8"></div>
+                      <div className="relative flex items-start space-x-3">
+                        <div className="text-2xl flex-shrink-0 mt-1">{umkm.icon}</div>
+                        <div className="flex-1">
+                          <h3 className="text-base font-bold leading-tight text-white">{umkm.name}</h3>
+                          <p className="text-blue-100 text-xs mt-0.5">{umkm.category}</p>
+                        </div>
+                        <div className="inline-block bg-white/30 backdrop-blur-sm px-2 py-0.5 rounded-full text-xs font-semibold text-white flex-shrink-0">
+                          {umkm.badge}
                         </div>
                       </div>
-                      <div className="inline-block bg-white/30 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-semibold text-white flex-shrink-0 mt-1">
-                        {umkm.badge}
-                      </div>
                     </div>
-                  </div>
 
-                  {/* Body */}
-                  <div className="p-8 flex-1 flex flex-col">
-                    <div className="space-y-6">
-                      <div className="flex items-center space-x-2 text-gray-300">
-                        <MapPin className="w-5 h-5 text-cyan-400 flex-shrink-0" />
-                        <span className="text-sm font-medium">{umkm.location}</span>
-                      </div>
-                      <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-lg rounded-2xl p-4 border border-white/20">
-                        <p className="text-gray-300 text-xs font-medium mb-2">Pendapatan Bulan Ini</p>
-                        <div className="flex items-center justify-between">
-                          <p className="text-2xl font-bold text-white">{umkm.revenue}</p>
-                          <div className={`text-lg font-bold flex items-center ${umkm.growth.startsWith('+') ? 'text-green-400' : 'text-red-400'}`}>
-                            <TrendingUp className="w-5 h-5 mr-1" />
-                            {umkm.growth}
+                    {/* Card Body */}
+                    <div className="p-4">
+                      <div className="space-y-3">
+                        <div className="flex items-center space-x-2 text-gray-600">
+                          <MapPin className="w-4 h-4 text-purple-600 flex-shrink-0" />
+                          <span className="text-sm font-medium">{umkm.location}</span>
+                        </div>
+                        <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-3">
+                          <p className="text-gray-600 text-xs font-medium mb-1">Pendapatan Bulan Ini</p>
+                          <div className="flex items-center justify-between">
+                            <p className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">{umkm.revenue}</p>
+                            <div className={`text-lg font-bold flex items-center ${umkm.growth.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>
+                              <TrendingUp className="w-4 h-4 mr-1" />
+                              {umkm.growth}
+                            </div>
                           </div>
                         </div>
                       </div>
