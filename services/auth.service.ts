@@ -6,8 +6,7 @@ import bcrypt from "bcrypt";
 
 // Authenticate User
 export async function authenticateUser(email: string, pass: string, ip: string, userAgent: string) {
-    const mongo = await connectMongo();
-    const cassandra = await connectCassandra();
+    const [mongo, cassandra] = await Promise.all([connectMongo(), connectCassandra()]);
 
     // Rate Limiting
     const rateCheck = await cassandra.execute(
@@ -22,17 +21,19 @@ export async function authenticateUser(email: string, pass: string, ip: string, 
     const isValid = user && await bcrypt.compare(pass, user.password_hash);
 
     if (!isValid) {
-        // Increment Failure Counter
-        await cassandra.execute(
-            'UPDATE login_attempts SET attempt_count = attempt_count + 1 WHERE ip_address = ?', 
-            [ip], { prepare: true }
-        );
+        await Promise.all([
+            // Increment Failure Counter
+            cassandra.execute(
+                'UPDATE login_attempts SET attempt_count = attempt_count + 1 WHERE ip_address = ?', 
+                [ip], { prepare: true }
+            ),
 
-        // Log Audit
-        await cassandra.execute(
-            'INSERT INTO login_logs (user_id, login_time, status, ip_address, device_info) VALUES (?, toTimestamp(now()), ?, ?, ?)',
-            [user!._id.toString(), 'failed', ip, userAgent], { prepare: true }
-        );
+            // Log Audit
+            cassandra.execute(
+                'INSERT INTO login_logs (user_id, login_time, status, ip_address, device_info) VALUES (?, toTimestamp(now()), ?, ?, ?)',
+                [user ? user._id.toString() : "00000000-0000-0000-0000-000000000000", 'failed', ip, userAgent], { prepare: true }
+            )
+        ]);
         return null;
     }
 
@@ -119,12 +120,11 @@ export async function sendEmail(to: string, token: string) {
 
 // Email Verification
 export async function verifyEmail(token: string) {
-    const mongo = await connectMongo();
-    const cassandra = await connectCassandra();
+    const [mongo, cassandra] = await Promise.all([connectMongo(), connectCassandra()]);
 
     const result = await cassandra.execute(
-        'SELECT user_id FROM temp_tokens WHERE token_value = ? AND purpose = ? ALLOW FILTERING',
-        [token, 'email_verification'], { prepare: true }
+        'SELECT user_id FROM temp_tokens WHERE token_value = ?',
+        [token], { prepare: true }
     );
 
     if (!result.rows.length) throw new Error("INVALID_TOKEN");
