@@ -1,12 +1,14 @@
 'use client';
 
-import { Plus, Search, Eye, MapPin, TrendingUp, LogOut, Menu, X, Sparkles, Award, Users, BarChart3 } from 'lucide-react';
-import { useState } from 'react';
+import { UMKMProfile } from '@/lib/types';
+import { Plus, Search, Eye, MapPin, TrendingUp, LogOut, Menu, X, Sparkles, Award, Users, BarChart3, Shirt, Croissant, UserRound, CircleEllipsis, HeartHandshake } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export default function HomePage() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showRegistrationForm, setShowRegistrationForm] = useState(false);
+  const [UMKMData, setUMKMData] = useState<UMKMProfile[]>([]);
   const [formData, setFormData] = useState({
     name: '',
     category: '',
@@ -16,54 +18,24 @@ export default function HomePage() {
     description: '',
   });
 
-  const umkmMilikSaya = [];
+  const icon = {
+    "kuliner": Croissant,
+    "fashion": Shirt,
+    "kriya": HeartHandshake,
+    "jasa": UserRound,
+    "lainnya": CircleEllipsis,
+  }
 
-  const umkmLain = [
-    {
-      id: 2,
-      name: 'Kerajinan Tangan Indah',
-      category: 'Kerajinan Tangan',
-      location: 'Bandung',
-      revenue: 'Rp 180.2M',
-      growth: '+8.3%',
-      status: 'Aktif',
-      icon: '🎨',
-      badge: 'Populer'
-    },
-    {
-      id: 3,
-      name: 'Konveksi Sejahtera',
-      category: 'Konveksi',
-      location: 'Surabaya',
-      revenue: 'Rp 95.8M',
-      growth: '-2.1%',
-      status: 'Aktif',
-      icon: '👕',
-      badge: 'Baru'
-    },
-    {
-      id: 4,
-      name: 'Batik Tulis Nusantara',
-      category: 'Batik',
-      location: 'Yogyakarta',
-      revenue: 'Rp 142.3M',
-      growth: '+5.7%',
-      status: 'Aktif',
-      icon: '🧵',
-      badge: 'Terverifikasi'
-    },
-    {
-      id: 5,
-      name: 'Kopi Robusta Asli',
-      category: 'Kopi',
-      location: 'Lampung',
-      revenue: 'Rp 320.7M',
-      growth: '+15.2%',
-      status: 'Aktif',
-      icon: '☕',
-      badge: 'Trending'
-    },
-  ];
+  useEffect(() => {
+    async function fetchUMKMData() {
+      const response = await fetch('/api/umkm');
+      const data = await response.json();
+      setUMKMData(data.data || []);
+    }
+    fetchUMKMData();
+  }, []);
+
+  const umkmMilikSaya = [];
 
   const stats = [
     { label: 'Total UMKM', value: '1,234', icon: Users, color: 'from-blue-500 to-blue-600' },
@@ -71,6 +43,10 @@ export default function HomePage() {
     { label: 'Pertumbuhan', value: '+23.5%', icon: TrendingUp, color: 'from-purple-500 to-purple-600' },
     { label: 'UMKM Terverifikasi', value: '892', icon: Award, color: 'from-orange-500 to-orange-600' },
   ];
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(amount);
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50">
@@ -244,8 +220,8 @@ export default function HomePage() {
         <div>
           <h2 className="text-3xl font-bold text-gray-900 mb-8">🌐 Semua UMKM</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {umkmLain.map((umkm) => (
-                <div key={umkm.id} className="group relative">
+              {UMKMData.map((umkm, _) => (
+                <div key={_} className="group relative">
                   <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 rounded-3xl blur-xl opacity-20 group-hover:opacity-40 transition"></div>
                   <div className="relative bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all transform hover:-translate-y-1">
                     {/* Card Header */}
@@ -253,13 +229,16 @@ export default function HomePage() {
                       <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-12 -mt-12"></div>
                       <div className="absolute bottom-0 left-0 w-16 h-16 bg-white/10 rounded-full -ml-8 -mb-8"></div>
                       <div className="relative flex items-start space-x-3">
-                        <div className="text-2xl flex-shrink-0 mt-1">{umkm.icon}</div>
+                        {(() => {
+                          const Icon = icon[umkm.sektor.toLowerCase() as keyof typeof icon] || icon.lainnya;
+                          return <Icon className="w-10 h-10 bg-white/20 backdrop-blur-sm p-2 rounded-lg flex-shrink-0" />;
+                        })()}
                         <div className="flex-1">
-                          <h3 className="text-base font-bold leading-tight text-white">{umkm.name}</h3>
-                          <p className="text-blue-100 text-xs mt-0.5">{umkm.category}</p>
+                          <h3 className="text-base font-bold leading-tight text-white">{umkm.nama_usaha}</h3>
+                          <p className="text-blue-100 text-xs mt-0.5">{umkm.sektor}</p>
                         </div>
                         <div className="inline-block bg-white/30 backdrop-blur-sm px-2 py-0.5 rounded-full text-xs font-semibold text-white flex-shrink-0">
-                          {umkm.badge}
+                          yayaya
                         </div>
                       </div>
                     </div>
@@ -269,15 +248,15 @@ export default function HomePage() {
                       <div className="space-y-3">
                         <div className="flex items-center space-x-2 text-gray-600">
                           <MapPin className="w-4 h-4 text-purple-600 flex-shrink-0" />
-                          <span className="text-sm font-medium">{umkm.location}</span>
+                          <span className="text-sm font-medium">{umkm.lokasi.coordinates[0]}, {umkm.lokasi.coordinates[1]}</span>
                         </div>
                         <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-3">
                           <p className="text-gray-600 text-xs font-medium mb-1">Pendapatan Bulan Ini</p>
                           <div className="flex items-center justify-between">
-                            <p className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">{umkm.revenue}</p>
-                            <div className={`text-lg font-bold flex items-center ${umkm.growth.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>
+                            <p className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">{formatCurrency(umkm.summary_terakhir.omzet_terakhir)}</p>
+                            <div className={`text-lg font-bold flex items-center ${umkm.summary_terakhir.omzet_terakhir ? 'text-green-600' : 'text-red-600'}`}>
                               <TrendingUp className="w-4 h-4 mr-1" />
-                              {umkm.growth}
+                              {'???'}
                             </div>
                           </div>
                         </div>
