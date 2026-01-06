@@ -1,5 +1,6 @@
 import { connectCassandra, connectMongo } from "@/lib/db";
 import { transporter } from "@/lib/mailer";
+import { cookies } from "next/headers";
 import { v4 as uuidv4 } from "uuid";
 import { UUID } from "mongodb";
 import bcrypt from "bcrypt";
@@ -47,6 +48,16 @@ export async function authenticateUser(email: string, pass: string, ip: string, 
     
     // Create Session
     const sessionToken = uuidv4();
+    const cookieStore = await cookies();
+    cookieStore.set("session_token", sessionToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        path: "/",
+        maxAge: 24 * 60 * 60 // 24 hours
+    });
+
+    // Store Session
     await mongo.collection("sessions").insertOne({
         // @ts-expect-error cast _id to UUID
         _id: new UUID(sessionToken),
@@ -60,7 +71,7 @@ export async function authenticateUser(email: string, pass: string, ip: string, 
         [user._id.toString(), 'success', ip, userAgent], { prepare: true }
     );
 
-    return { token: sessionToken, user: { email: user.email, role: user.role } };
+    return { user, token: sessionToken };
 }
 
 // Register User
