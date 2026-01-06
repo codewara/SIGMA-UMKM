@@ -61,3 +61,26 @@ CREATE TABLE analysis_umkm_growth (
     rekomendasi text,
     PRIMARY KEY (umkm_id, periode)
 );
+
+-- Table 5: Login Activity Logs
+CREATE TABLE login_logs (
+    user_id uuid,
+    login_time timestamp,
+    status text,
+    ip_address inet,
+    device_info text,
+    PRIMARY KEY ((user_id), login_time)
+) WITH CLUSTERING ORDER BY (login_time DESC);
+
+-- Table 6: 
+CREATE TABLE temp_tokens (
+    token_value uuid PRIMARY KEY,
+    user_id uuid,
+    purpose text, -- e.g., 'password_reset', 'email_verification'
+) WITH default_time_to_live = 900; -- 15 minutes TTL
+
+-- Table 7: Login Attempts Counter
+CREATE TABLE login_attempts (
+    ip_address inet PRIMARY KEY,
+    attempt_count counter
+);
