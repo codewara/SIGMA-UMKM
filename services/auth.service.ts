@@ -11,7 +11,7 @@ export async function authenticateUser(email: string, pass: string, ip: string, 
 
     // Rate Limiting
     const rateCheck = await cassandra.execute(
-        'SELECT attempt_count FROM login_attempts WHERE ip_address = ?', 
+        'SELECT attempt_count FROM login_attempts WHERE ip_address = ?',
         [ip], { prepare: true }
     );
     const attempts = rateCheck.first()?.attempt_count?.toNumber() || 0;
@@ -25,7 +25,7 @@ export async function authenticateUser(email: string, pass: string, ip: string, 
         await Promise.all([
             // Increment Failure Counter
             cassandra.execute(
-                'UPDATE login_attempts SET attempt_count = attempt_count + 1 WHERE ip_address = ?', 
+                'UPDATE login_attempts SET attempt_count = attempt_count + 1 WHERE ip_address = ?',
                 [ip], { prepare: true }
             ),
 
@@ -41,11 +41,11 @@ export async function authenticateUser(email: string, pass: string, ip: string, 
     // Reset Failure Counter
     if (attempts > 0) {
         await cassandra.execute(
-            'UPDATE login_attempts SET attempt_count = attempt_count - ? WHERE ip_address = ?', 
+            'UPDATE login_attempts SET attempt_count = attempt_count - ? WHERE ip_address = ?',
             [attempts, ip], { prepare: true }
         );
     }
-    
+
     // Create Session
     const sessionToken = uuidv4();
     const cookieStore = await cookies();
@@ -77,16 +77,16 @@ export async function authenticateUser(email: string, pass: string, ip: string, 
 // Logout User
 export async function logoutUser(sessionToken: string) {
     const [mongo, cookieStore] = await Promise.all([connectMongo(), cookies()]);
-    
+
     cookieStore.delete("session_token");
-    await mongo.collection("sessions").deleteOne({ 
+    await mongo.collection("sessions").deleteOne({
         // @ts-expect-error cast _id to UUID
-        _id: new UUID(sessionToken) 
+        _id: new UUID(sessionToken)
     });
 }
 
 // Register User
-export async function registerUser(email: string, pass: string) {
+export async function registerUser(email: string, pass: string, role: "ADMIN" | "PEJABAT" | "UMKM_OWNER" = "UMKM_OWNER") {
     const mongo = await connectMongo();
 
     const existingUser = await mongo.collection("users").findOne({ email });
@@ -94,13 +94,13 @@ export async function registerUser(email: string, pass: string) {
 
     const userId = uuidv4();
     const hashedPassword = await bcrypt.hash(pass, 12);
-    
+
     await mongo.collection("users").insertOne({
         // @ts-expect-error cast _id to UUID
         _id: new UUID(userId),
         email: email,
         password_hash: hashedPassword,
-        role: "UMKM_OWNER",
+        role: role,
         account_status: "unverified",
         created_at: new Date(),
         expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days

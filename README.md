@@ -292,6 +292,37 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000)
 
+### 5. Testing RBAC (Create Test Users)
+
+Create users with different roles to test access control:
+
+**Admin User:**
+```bash
+curl -X POST http://localhost:3000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@test.com","password":"admin123","role":"ADMIN"}'
+```
+
+**Pejabat User (Government Official):**
+```bash
+curl -X POST http://localhost:3000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"pejabat@test.com","password":"pejabat123","role":"PEJABAT"}'
+```
+
+**Regular User (Default: UMKM_OWNER):**
+```bash
+curl -X POST http://localhost:3000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@test.com","password":"user123"}'
+```
+
+Then verify emails (check Cassandra temp_tokens table) and login to test role-based access.
+
+**Frontend Pages:**
+- `/umkm` - UMKM list (public with limited data, full data when logged in)
+- `/financial/input` - Input monthly revenue (ADMIN & PEJABAT only)
+
 ## 🔐 Authentication Flow
 
 ```mermaid
@@ -308,7 +339,7 @@ sequenceDiagram
     
     U->>A: GET /api/auth/verify-email?token=xxx
     A->>C: Check temp_token exists
-    A->>M: Update is_verified=true
+    A->>M: Update account_status=active
     A->>U: Redirect to login
     
     U->>A: POST /api/auth/login
@@ -325,6 +356,44 @@ sequenceDiagram
 - HTTP-only cookies
 - Session expiration (24h)
 - Email verification with TTL tokens
+
+## 🛡️ Role-Based Access Control (RBAC)
+
+### User Roles
+
+| Role | Description |
+|------|-------------|
+| **ADMIN** | Full system access - manage UMKM profiles, edit/delete data, view all details |
+| **PEJABAT** | Government official - **primary role for inputting monthly revenue**, view full dashboard |
+| **UMUM** | Public/unauthenticated - view aggregated dashboard data only (restricted access) |
+
+### Access Matrix
+
+| Feature / Action | ADMIN | PEJABAT | UMUM | Database |
+|------------------|-------|---------|------|----------|
+| **Tambah UMKM Baru** | ✅ YES | ❌ NO | ❌ NO | MongoDB |
+| **Edit Profil UMKM** | ✅ YES | ❌ NO | ❌ NO | MongoDB |
+| **Hapus UMKM** | ✅ YES | ❌ NO | ❌ NO | MongoDB |
+| **Input Omzet Bulanan** | ⚠️ Can | ✅ **PRIMARY FOCUS** | ❌ NO | Cassandra |
+| **Lihat Dashboard** | ✅ Full Data | ✅ Full Data | ⚠️ Aggregated Only | Cassandra |
+| **Lihat Detail UMKM** | ✅ Full (with contact) | ✅ Full (with contact) | ⚠️ Basic Info Only | MongoDB |
+
+### API Endpoint Permissions
+
+| Endpoint | ADMIN | PEJABAT | UMUM |
+|----------|-------|---------|------|
+| `GET /api/umkm` | Full data | Full data | Basic info only (nama, sektor, kota) |
+| `POST /api/umkm` | ✅ | ❌ | ❌ |
+| `GET /api/umkm/[id]` | Full + contact | Full + contact | Basic only |
+| `PATCH /api/umkm/[id]` | ✅ | ❌ | ❌ |
+| `DELETE /api/umkm/[id]` | ✅ | ❌ | ❌ |
+| `GET /api/analytics/financial` | Full data | Full data | Aggregated stats only |
+| `GET /api/analytics/financial/[umkm_id]` | ✅ | ✅ | ❌ |
+| `POST /api/analytics/financial/[umkm_id]` | ✅ | ✅ ⭐ | ❌ |
+| `PATCH /api/analytics/financial/[umkm_id]` | ✅ | ❌ | ❌ |
+| `DELETE /api/analytics/financial/[umkm_id]` | ✅ | ❌ | ❌ |
+
+⭐ **PRIMARY FOCUS**: Main responsibility for PEJABAT role
 
 ## 📈 Key Features
 
@@ -364,10 +433,11 @@ sequenceDiagram
 ### 🔐 Authentication
 | Method | Endpoint | Description | Request Body |
 |--------|----------|-------------|--------------|
-| POST | `/api/auth/register` | User registration | `{ email, password }` |
+| POST | `/api/auth/register` | User registration with role assignment | `{ email, password, role? }` |
 | GET | `/api/auth/verify-email?token={token}` | Email verification via token | - |
 | POST | `/api/auth/login` | User login with rate limiting | `{ email, password }` |
 | POST | `/api/auth/logout` | User logout (invalidate session) | `{ sessionToken }` |
+| GET | `/api/auth/me` | Get current user info (for frontend) | - |
 
 ### 🏢 UMKM Profile Management (MongoDB)
 | Method | Endpoint | Description | Request Body |

@@ -1,8 +1,9 @@
 'use client';
 
-import { Plus, Search, Eye, MapPin, TrendingUp, LogOut, Menu, X, Sparkles, Award, Users, BarChart3, Star } from 'lucide-react';
-import { useState } from 'react';
+import { Plus, Search, Eye, MapPin, TrendingUp, LogOut, Menu, X, Sparkles, Award, Users, BarChart3, Star, Shield, FileText, DollarSign } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 interface UMKM {
   id: number;
@@ -16,11 +17,20 @@ interface UMKM {
   badge: string;
 }
 
+interface User {
+  _id: string;
+  username: string;
+  email: string;
+  role: 'ADMIN' | 'PEJABAT' | 'UMUM';
+}
+
 export default function HomePage() {
   const router = useRouter();
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showRegistrationForm, setShowRegistrationForm] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
     category: '',
@@ -29,6 +39,34 @@ export default function HomePage() {
     email: '',
     description: '',
   });
+
+  useEffect(() => {
+    fetchUser();
+  }, []);
+
+  const fetchUser = async () => {
+    try {
+      const res = await fetch('/api/auth/me');
+      if (res.ok) {
+        const data = await res.json();
+        setUser(data.user);
+      }
+    } catch (error) {
+      console.error('Failed to fetch user:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      setUser(null);
+      // router.push('/auth/login');
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
 
   const umkmMilikSaya: UMKM[] = [];
 
@@ -130,12 +168,45 @@ export default function HomePage() {
             </div>
 
             {/* Desktop Menu */}
-            <div className="hidden md:flex items-center space-x-8">
-              <button className="text-white/90 hover:text-white font-semibold transition transform hover:scale-105">Dashboard</button>
-              <button className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-full font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition">
-                <LogOut className="w-5 h-5" />
-                <span>Keluar</span>
-              </button>
+            <div className="hidden md:flex items-center space-x-6">
+              {user && (
+                <>
+                  <div className="text-white/80 text-sm">
+                    {user.username} <span className="text-cyan-300">({user.role})</span>
+                  </div>
+
+                  {user.role === 'ADMIN' && (
+                    <Link href="/admin">
+                      <button className="flex items-center space-x-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-lg font-semibold transition">
+                        <Shield className="w-4 h-4" />
+                        <span>Admin Panel</span>
+                      </button>
+                    </Link>
+                  )}
+
+                  {user.role === 'PEJABAT' && (
+                    <Link href="/admin/revenue">
+                      <button className="flex items-center space-x-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-lg font-semibold transition">
+                        <DollarSign className="w-4 h-4" />
+                        <span>Input Revenue</span>
+                      </button>
+                    </Link>
+                  )}
+
+                  <button onClick={handleLogout} className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-full font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition">
+                    <LogOut className="w-5 h-5" />
+                    <span>Keluar</span>
+                  </button>
+                </>
+              )}
+
+              {!user && !isLoading && (
+                <Link href="/auth/login">
+                  <button className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-full font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition">
+                    <span>Masuk</span>
+                  </button>
+                </Link>
+              )}
             </div>
 
             {/* Mobile Menu Button */}

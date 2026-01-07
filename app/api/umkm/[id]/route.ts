@@ -3,10 +3,14 @@ import { connectMongo } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { UUID } from "mongodb";
+import { requireAuth } from "@/lib/auth";
 
 // get profile umkm by id
-export async function GET(req: NextRequest, context: { params: Promise<{ id: string }>}) {
-    const { id } = await context.params; 
+// RBAC: ADMIN & PEJABAT (full), UMUM (restricted)
+export async function GET(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+    const { user } = await requireAuth(["ADMIN", "PEJABAT", "UMUM"]);
+
+    const { id } = await context.params;
     const db = await connectMongo();
     const umkmCollection = db.collection("umkm_profiles");
 
@@ -14,16 +18,35 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
     const umkm = await umkmCollection.findOne({ _id: new UUID(id) });
     if (!umkm) {
         return NextResponse.json(
-            { error: "UMKM not found", id},
+            { error: "UMKM not found", id },
             { status: 404 }
         );
     }
-    return NextResponse.json({ message: "UMKM returned with 1 data", data: umkm });
+
+    // UMUM: Restricted view (no contact info)
+    if (!user || user.role === "UMUM") {
+        const restricted = {
+            _id: umkm._id,
+            nama_usaha: umkm.nama_usaha,
+            sektor: umkm.sektor,
+            wilayah: umkm.wilayah,
+            lokasi: umkm.lokasi,
+            summary_terakhir: umkm.summary_terakhir
+        };
+        return NextResponse.json({ message: "UMKM public view", data: restricted });
+    }
+
+    // ADMIN & PEJABAT: Full data
+    return NextResponse.json({ message: "UMKM full data", data: umkm });
 }
 
 // update profile umkm
-export async function PATCH(req: NextRequest, context: { params: Promise<{ id: string }>}) {
-    try{
+// RBAC: ADMIN only
+export async function PATCH(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+    const { user, error } = await requireAuth(["ADMIN"]);
+    if (error) return NextResponse.json({ error }, { status: 403 });
+
+    try {
         const { id } = await context.params;
         const db = await connectMongo();
         const umkmCollection = db.collection("umkm_profiles");
@@ -44,12 +67,16 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
         if (err instanceof ZodError) {
             return NextResponse.json({ error: "Validation failed", details: err.issues }, { status: 400 });
         }
-        return NextResponse.json({ error: "Failed to update UMKM", err}, { status: 500 });
+        return NextResponse.json({ error: "Failed to update UMKM", err }, { status: 500 });
     }
 }
 
 // delete profile umkm
-export async function DELETE(context: { params: Promise<{ id: string }> }){
+// RBAC: ADMIN only
+export async function DELETE(context: { params: Promise<{ id: string }> }) {
+    const { user, error } = await requireAuth(["ADMIN"]);
+    if (error) return NextResponse.json({ error }, { status: 403 });
+
     try {
         const { id } = await context.params;
         const db = await connectMongo();

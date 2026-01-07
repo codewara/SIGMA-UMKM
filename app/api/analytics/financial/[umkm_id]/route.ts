@@ -2,13 +2,18 @@ import { connectCassandra } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { umkmFinancialLogSchema } from "@/lib/validation/umkm_financial.schema";
 import { ZodError } from "zod";
+import { requireAuth } from "@/lib/auth";
 
 // ambil data finansilal umkm by id umkm
-export async function GET(req: NextRequest, context: { params: Promise<{ umkm_id: string }>}) {
+// RBAC: ADMIN & PEJABAT (full), UMUM not allowed
+export async function GET(req: NextRequest, context: { params: Promise<{ umkm_id: string }> }) {
+    const { user, error } = await requireAuth(["ADMIN", "PEJABAT"]);
+    if (error) return NextResponse.json({ error }, { status: 403 });
+
     try {
         const { umkm_id } = await context.params;
         const tahunParam = req.nextUrl.searchParams.get('tahun');
-        const tahun = tahunParam ? parseInt(tahunParam, 10) : new Date().getFullYear();                         // fallback ke tahun ini
+        const tahun = tahunParam ? parseInt(tahunParam, 10) : new Date().getFullYear();
         if (Number.isNaN(tahun)) {
             return NextResponse.json({ error: "Parameter 'tahun' tidak valid" }, { status: 400 })
         }
@@ -23,37 +28,45 @@ export async function GET(req: NextRequest, context: { params: Promise<{ umkm_id
         const financialLog = await db.execute(query, [umkm_id, tahun]);
         return NextResponse.json({ message: "Data log finansial UMKM berhasil diambil", financialLog });
     } catch (err) {
-        return NextResponse.json({ error: "Failed to get UMKM financial data", err}, { status: 500 });
+        return NextResponse.json({ error: "Failed to get UMKM financial data", err }, { status: 500 });
     }
 }
 
 // input data finansial umkm
-export async function POST(req: NextRequest, context: { params: Promise<{ umkm_id: string }>}) {
+// RBAC: ADMIN & PEJABAT (FOKUS UTAMA untuk PEJABAT)
+export async function POST(req: NextRequest, context: { params: Promise<{ umkm_id: string }> }) {
+    const { user, error } = await requireAuth(["ADMIN", "PEJABAT"]);
+    if (error) return NextResponse.json({ error }, { status: 403 });
+
     try {
         const { umkm_id } = await context.params;
-        
+
         // validasi data
         const reqBody = await req.json();
         const parsed = umkmFinancialLogSchema.parse(reqBody);
 
         const db = await connectCassandra();
         const query = `
-            INSERT INTO umkm_financial_log (umkm_id, tahun, bulan, omzet, jumlah_karyawan, nama_usaha, sektor)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO umkm_financial_log (umkm_id, tahun, bulan, omzet, jumlah_karyawan, nama_usaha, sektor, tgl_input)
+            VALUES (?, ?, ?, ?, ?, ?, ?, toTimestamp(now()))
         `;
-        
+
         await db.execute(query, [umkm_id, parsed.tahun, parsed.bulan, parsed.omzet, parsed.jumlah_karyawan, parsed.nama_usaha, parsed.sektor]);
         return NextResponse.json({ message: "Data log finansial UMKM berhasil ditambahkan", data: parsed }, { status: 201 });
     } catch (err) {
         if (err instanceof ZodError) {
             return NextResponse.json({ error: "Validation failed", details: err.issues }, { status: 400 });
         }
-        return NextResponse.json({ error: "Failed to create UMKM financial log", err}, { status: 500 });
+        return NextResponse.json({ error: "Failed to create UMKM financial log", err }, { status: 500 });
     }
 }
 
 // update data finansial umkm
-export async function PATCH(req: NextRequest, context: { params: Promise<{ umkm_id: string }>}) {
+// RBAC: ADMIN only
+export async function PATCH(req: NextRequest, context: { params: Promise<{ umkm_id: string }> }) {
+    const { user, error } = await requireAuth(["ADMIN"]);
+    if (error) return NextResponse.json({ error }, { status: 403 });
+
     try {
         const { umkm_id } = await context.params;
         const tahunParam = req.nextUrl.searchParams.get('tahun');
@@ -70,7 +83,7 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ umkm_
         // validasi data
         const reqBody = await req.json();
         const parsed = umkmFinancialLogSchema.partial().parse(reqBody);
-        
+
         const db = await connectCassandra();
         const query = `
             UPDATE umkm_financial_log
@@ -84,12 +97,16 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ umkm_
         if (err instanceof ZodError) {
             return NextResponse.json({ error: "Validation failed", details: err.issues }, { status: 400 });
         }
-        return NextResponse.json({ error: "Failed to update UMKM financial log", err}, { status: 500 });
+        return NextResponse.json({ error: "Failed to update UMKM financial log", err }, { status: 500 });
     }
 }
 
 // delete data finansial umkm
-export async function DELETE(req: NextRequest ,context: { params: Promise<{ umkm_id: string }>}) {
+// RBAC: ADMIN only
+export async function DELETE(req: NextRequest, context: { params: Promise<{ umkm_id: string }> }) {
+    const { user, error } = await requireAuth(["ADMIN"]);
+    if (error) return NextResponse.json({ error }, { status: 403 });
+
     try {
         const { umkm_id } = await context.params;
         const tahunParam = req.nextUrl.searchParams.get('tahun');
@@ -102,16 +119,16 @@ export async function DELETE(req: NextRequest ,context: { params: Promise<{ umkm
                 { status: 400 }
             )
         }
-        
-        const db = await connectCassandra();    
+
+        const db = await connectCassandra();
         const query = `
             DELETE FROM umkm_financial_log
             WHERE umkm_id = ? AND tahun = ? AND bulan = ?
         `;
-        
+
         await db.execute(query, [umkm_id, tahun, bulan]);
         return NextResponse.json({ message: "Data log finansial UMKM berhasil dihapus" });
     } catch (err) {
-        return NextResponse.json({ error: "Failed to delete UMKM financial log", err}, { status: 500 });
+        return NextResponse.json({ error: "Failed to delete UMKM financial log", err }, { status: 500 });
     }
 }

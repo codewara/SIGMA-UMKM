@@ -3,13 +3,17 @@ import { registerUser } from '@/services/auth.service';
 
 export async function POST(request: NextRequest) {
     try {
-        const { email, password } = await request.json();
+        const { email, password, role } = await request.json();
         if (!email || !password) return NextResponse.json({ error: "Missing fields" }, { status: 400 });
 
-        // Register User
-        const data = await registerUser(email, password);
+        // Validate role (default to UMKM_OWNER if not provided)
+        const validRoles = ["ADMIN", "PEJABAT", "UMKM_OWNER"];
+        const userRole = role && validRoles.includes(role) ? role : "UMKM_OWNER";
 
-        return NextResponse.json({ message: "User registered successfully", data }, { status: 201 });
+        // Register User
+        const data = await registerUser(email, password, userRole);
+
+        return NextResponse.json({ message: "User registered successfully", data, role: userRole }, { status: 201 });
     }
     catch (error) {
         if (error instanceof Error && error.message === "USER_EXISTS") {
