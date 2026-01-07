@@ -16,12 +16,6 @@ export const umkmFinancialLogSchema = z.object({
     .number()
     .int()
     .nonnegative("jumlah karyawan tidak boleh negatif"),
-  nama_usaha: z
-    .string()
-    .min(2, "nama usaha terlalu pendek"),
-  sektor: z
-    .string()
-    .min(2, "sektor tidak valid")
 });
 
 export const umkmFinancialLogUpdateSchema = umkmFinancialLogSchema.partial();
