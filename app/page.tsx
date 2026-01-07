@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 interface UMKM {
-  id: number;
+  id: string;
   name: string;
   category: string;
   location: string;
@@ -15,13 +15,35 @@ interface UMKM {
   status: string;
   icon: string;
   badge: string;
+  // Additional fields from API
+  wilayah?: {
+    kota: string;
+    provinsi: string;
+    alamat_lengkap: string;
+  };
+  tanggal_bergabung?: Date;
+  pemilik?: {
+    nama: string;
+    nik: string;
+    telepon: string;
+    email: string;
+  };
+  legalitas?: {
+    nib: string;
+    pirt: string;
+    halal: boolean;
+    status_verifikasi: string;
+  };
+  is_deleted?: boolean;
+  omzet_terakhir?: number;
+  bulan?: number;
 }
 
 interface User {
   _id: string;
   username: string;
   email: string;
-  role: 'ADMIN' | 'PEJABAT' | 'UMUM';
+  role: 'ADMIN' | 'PEJABAT' | 'UMKM_OWNER';
 }
 
 export default function HomePage() {
@@ -31,6 +53,8 @@ export default function HomePage() {
   const [showRegistrationForm, setShowRegistrationForm] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [umkmData, setUmkmData] = useState<UMKM[]>([]);
+  const [isLoadingUmkm, setIsLoadingUmkm] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
     category: '',
@@ -42,6 +66,7 @@ export default function HomePage() {
 
   useEffect(() => {
     fetchUser();
+    fetchUmkmData();
   }, []);
 
   const fetchUser = async () => {
@@ -58,6 +83,58 @@ export default function HomePage() {
     }
   };
 
+  const fetchUmkmData = async () => {
+    try {
+      setIsLoadingUmkm(true);
+      const res = await fetch('/api/umkm');
+      if (res.ok) {
+        const response = await res.json();
+        // Map API response to expected format
+        const mapped = response.data.map((umkm: any, index: number) => ({
+          id: umkm._id || index,
+          name: umkm.nama_usaha || 'Nama tidak tersedia',
+          category: umkm.sektor || 'Kategori tidak tersedia',
+          location: umkm.wilayah?.kota || umkm.wilayah?.provinsi || 'Lokasi tidak tersedia',
+          revenue: umkm.summary_terakhir?.omzet_terakhir
+            ? formatCurrency(umkm.summary_terakhir.omzet_terakhir)
+            : 'Belum ada data',
+          growth: '+0%',
+          status: umkm.legalitas?.status_verifikasi || 'Aktif',
+          icon: getSektorIcon(umkm.sektor),
+          badge: umkm.legalitas?.status_verifikasi === 'VERIFIED' ? 'Terverifikasi' : 'Aktif',
+          // Additional fields
+          wilayah: umkm.wilayah,
+          tanggal_bergabung: umkm.tanggal_bergabung ? new Date(umkm.tanggal_bergabung) : undefined,
+          pemilik: umkm.pemilik,
+          legalitas: umkm.legalitas,
+          is_deleted: umkm.is_deleted,
+          omzet_terakhir: umkm.summary_terakhir?.omzet_terakhir,
+          bulan: umkm.summary_terakhir?.bulan,
+        }));
+        setUmkmData(mapped);
+      }
+    } catch (error) {
+      console.error('Failed to fetch UMKM data:', error);
+    } finally {
+      setIsLoadingUmkm(false);
+    }
+  };
+
+  const getSektorIcon = (sektor: string) => {
+    const iconMap: { [key: string]: string } = {
+      'Kuliner': '🍽️',
+      'Kerajinan Tangan': '🎨',
+      'Konveksi': '👕',
+      'Batik': '🧵',
+      'Kopi': '☕',
+      'Fashion': '👗',
+      'Teknologi': '💻',
+      'Pertanian': '🌾',
+      'default': '🏪'
+    };
+    return iconMap[sektor] || iconMap['default'];
+  };
+
   const handleLogout = async () => {
     try {
       const response = await fetch('/api/auth/logout', { method: 'POST' });
@@ -71,53 +148,6 @@ export default function HomePage() {
   };
 
   const umkmMilikSaya: UMKM[] = [];
-
-  const umkmLain = [
-    {
-      id: 2,
-      name: 'Kerajinan Tangan Indah',
-      category: 'Kerajinan Tangan',
-      location: 'Bandung',
-      revenue: 'Rp 180.2M',
-      growth: '+8.3%',
-      status: 'Aktif',
-      icon: '🎨',
-      badge: 'Populer'
-    },
-    {
-      id: 3,
-      name: 'Konveksi Sejahtera',
-      category: 'Konveksi',
-      location: 'Surabaya',
-      revenue: 'Rp 95.8M',
-      growth: '-2.1%',
-      status: 'Aktif',
-      icon: '👕',
-      badge: 'Baru'
-    },
-    {
-      id: 4,
-      name: 'Batik Tulis Nusantara',
-      category: 'Batik',
-      location: 'Yogyakarta',
-      revenue: 'Rp 142.3M',
-      growth: '+5.7%',
-      status: 'Aktif',
-      icon: '🧵',
-      badge: 'Terverifikasi'
-    },
-    {
-      id: 5,
-      name: 'Kopi Robusta Asli',
-      category: 'Kopi',
-      location: 'Lampung',
-      revenue: 'Rp 320.7M',
-      growth: '+15.2%',
-      status: 'Aktif',
-      icon: '☕',
-      badge: 'Trending'
-    },
-  ];
 
   const stats = [
     { label: 'Total UMKM', value: '1,234', icon: Users, color: 'from-blue-400 to-blue-600' },
@@ -435,59 +465,215 @@ export default function HomePage() {
 
         {/* Semua UMKM Section */}
         <div>
-          <h2 className="text-3xl font-bold text-gray-900 mb-8">🌐 Semua UMKM</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {umkmLain.map((umkm) => (
-              <div key={umkm.id} className="group relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 rounded-3xl blur-xl opacity-20 group-hover:opacity-40 transition"></div>
-                <div className="relative bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all transform hover:-translate-y-1">
-                  {/* Card Header */}
-                  <div className="relative bg-blue-500 p-4 text-white overflow-hidden">
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-12 -mt-12"></div>
-                    <div className="absolute bottom-0 left-0 w-16 h-16 bg-white/10 rounded-full -ml-8 -mb-8"></div>
-                    <div className="relative flex items-start space-x-3">
-                      <div className="text-2xl flex-shrink-0 mt-1">{umkm.icon}</div>
-                      <div className="flex-1">
-                        <h3 className="text-base font-bold leading-tight text-white">{umkm.name}</h3>
-                        <p className="text-blue-100 text-xs mt-0.5">{umkm.category}</p>
-                      </div>
-                      <div className="inline-block bg-white/30 backdrop-blur-sm px-2 py-0.5 rounded-full text-xs font-semibold text-white flex-shrink-0">
-                        {umkm.badge}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Card Body */}
-                  <div className="p-4">
-                    <div className="space-y-3">
-                      <div className="flex items-center space-x-2 text-gray-600">
-                        <MapPin className="w-4 h-4 text-purple-600 flex-shrink-0" />
-                        <span className="text-sm font-medium">{umkm.location}</span>
-                      </div>
-                      <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-3">
-                        <p className="text-gray-600 text-xs font-medium mb-1">Pendapatan Bulan Ini</p>
-                        <div className="flex items-center justify-between">
-                          <p className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">{umkm.revenue}</p>
-                          <div className={`text-lg font-bold flex items-center ${umkm.growth.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>
-                            <TrendingUp className="w-4 h-4 mr-1" />
-                            {umkm.growth}
+          <h2 className="text-3xl font-bold text-white mb-8">🌐 Semua UMKM</h2>
+          {isLoadingUmkm ? (
+            <div className="text-center py-12">
+              <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-400"></div>
+              <p className="text-white mt-4">Memuat data UMKM...</p>
+            </div>
+          ) : umkmData.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-white text-lg">Belum ada data UMKM tersedia</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {umkmData.map((umkm) => (
+                <div key={umkm.id} className="group relative">
+                  {/* Public/UMKM_OWNER View - Simple Card */}
+                  {(!user || user.role === 'UMKM_OWNER') && (
+                    <>
+                      <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-3xl blur-xl opacity-20 group-hover:opacity-40 transition"></div>
+                      <div className="relative bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all transform hover:-translate-y-1">
+                        {/* Header */}
+                        <div className="relative bg-gradient-to-br from-cyan-500 to-blue-600 p-5 text-white overflow-hidden">
+                          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+                          <div className="relative flex items-start space-x-3">
+                            <div className="text-3xl flex-shrink-0">{umkm.icon}</div>
+                            <div className="flex-1">
+                              <h3 className="text-lg font-bold leading-tight">{umkm.name}</h3>
+                              <p className="text-cyan-100 text-sm mt-1">{umkm.category}</p>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </div>
-                  </div>
 
-                  {/* Card Footer */}
-                  <button
-                    onClick={() => router.push(`/umkm/${umkm.id}`)}
-                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-8 py-5 rounded-2xl font-bold text-base transition transform hover:scale-[1.02] shadow-xl mt-8 uppercase tracking-widest"
-                  >
-                    Lihat Detail
-                  </button>
+                        {/* Body */}
+                        <div className="p-5 space-y-3">
+                          <div className="flex items-start space-x-2 text-gray-700">
+                            <MapPin className="w-5 h-5 text-cyan-600 flex-shrink-0 mt-0.5" />
+                            <div>
+                              <p className="font-semibold text-sm">{umkm.wilayah?.alamat_lengkap || 'Alamat tidak tersedia'}</p>
+                              <p className="text-xs text-gray-500">{umkm.wilayah?.kota}, {umkm.wilayah?.provinsi}</p>
+                            </div>
+                          </div>
+
+                          {umkm.tanggal_bergabung && (
+                            <div className="bg-cyan-50 rounded-lg p-3">
+                              <p className="text-xs text-gray-600 mb-1">Bergabung Sejak</p>
+                              <p className="text-sm font-bold text-cyan-700">
+                                {new Date(umkm.tanggal_bergabung).toLocaleDateString('id-ID', { year: 'numeric', month: 'long' })}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Footer */}
+                        <button
+                          onClick={() => router.push(`/umkm/${umkm.id}`)}
+                          className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white py-4 font-bold transition"
+                        >
+                          Lihat Detail
+                        </button>
+                      </div>
+                    </>
+                  )}
+
+                  {/* PEJABAT View - Medium Detail Card */}
+                  {user && user.role === 'PEJABAT' && (
+                    <>
+                      <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-3xl blur-xl opacity-20 group-hover:opacity-40 transition"></div>
+                      <div className="relative bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all transform hover:-translate-y-1">
+                        {/* Header */}
+                        <div className="relative bg-gradient-to-br from-purple-500 to-pink-500 p-4 text-white overflow-hidden">
+                          <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-12 -mt-12"></div>
+                          <div className="relative flex items-start justify-between">
+                            <div className="flex items-start space-x-3">
+                              <div className="text-2xl flex-shrink-0">{umkm.icon}</div>
+                              <div>
+                                <h3 className="text-base font-bold leading-tight">{umkm.name}</h3>
+                                <p className="text-purple-100 text-xs mt-0.5">{umkm.category}</p>
+                              </div>
+                            </div>
+                            <div className="inline-block bg-white/30 backdrop-blur-sm px-2 py-0.5 rounded-full text-xs font-semibold">
+                              {umkm.badge}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Body */}
+                        <div className="p-4 space-y-3">
+                          <div className="flex items-center space-x-2 text-gray-600">
+                            <MapPin className="w-4 h-4 text-purple-600 flex-shrink-0" />
+                            <span className="text-sm font-medium">{umkm.location}</span>
+                          </div>
+
+                          {umkm.pemilik && (
+                            <div className="bg-purple-50 rounded-lg p-3">
+                              <p className="text-xs text-gray-600 mb-1">Pemilik</p>
+                              <p className="text-sm font-bold text-gray-800">{umkm.pemilik.nama}</p>
+                              <p className="text-xs text-gray-600 mt-1">{umkm.pemilik.telepon}</p>
+                            </div>
+                          )}
+
+                          <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-3">
+                            <p className="text-gray-600 text-xs font-medium mb-1">Omzet Terakhir</p>
+                            <div className="flex items-center justify-between">
+                              <p className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">{umkm.revenue}</p>
+                              {umkm.bulan && (
+                                <span className="text-xs text-gray-500">Bulan {umkm.bulan}</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Footer */}
+                        <button
+                          onClick={() => router.push(`/umkm/${umkm.id}`)}
+                          className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white py-4 font-bold transition"
+                        >
+                          Lihat Detail
+                        </button>
+                      </div>
+                    </>
+                  )}
+
+                  {/* ADMIN View - Full Detail Card */}
+                  {user && user.role === 'ADMIN' && (
+                    <>
+                      <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-red-500 rounded-3xl blur-xl opacity-20 group-hover:opacity-40 transition"></div>
+                      <div className="relative bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all transform hover:-translate-y-1">
+                        {/* Header */}
+                        <div className="relative bg-gradient-to-br from-orange-500 to-red-500 p-4 text-white overflow-hidden">
+                          <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-12 -mt-12"></div>
+                          <div className="relative">
+                            <div className="flex items-start justify-between mb-2">
+                              <div className="flex items-start space-x-3">
+                                <div className="text-2xl flex-shrink-0">{umkm.icon}</div>
+                                <div>
+                                  <h3 className="text-base font-bold leading-tight">{umkm.name}</h3>
+                                  <p className="text-orange-100 text-xs mt-0.5">{umkm.category}</p>
+                                </div>
+                              </div>
+                              <div className="flex flex-col items-end gap-1">
+                                <div className="inline-block bg-white/30 backdrop-blur-sm px-2 py-0.5 rounded-full text-xs font-semibold">
+                                  {umkm.badge}
+                                </div>
+                                {umkm.is_deleted && (
+                                  <div className="inline-block bg-red-600 px-2 py-0.5 rounded-full text-xs font-semibold">
+                                    Deleted
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Body */}
+                        <div className="p-4 space-y-2">
+                          <div className="flex items-center space-x-2 text-gray-600">
+                            <MapPin className="w-4 h-4 text-orange-600 flex-shrink-0" />
+                            <span className="text-xs font-medium">{umkm.location}</span>
+                          </div>
+
+                          {umkm.pemilik && (
+                            <div className="bg-orange-50 rounded-lg p-2">
+                              <p className="text-xs text-gray-500">Pemilik</p>
+                              <p className="text-sm font-bold text-gray-800">{umkm.pemilik.nama}</p>
+                              <div className="flex justify-between mt-1">
+                                <p className="text-xs text-gray-600">{umkm.pemilik.telepon}</p>
+                                <p className="text-xs text-gray-600">{umkm.pemilik.email}</p>
+                              </div>
+                              <p className="text-xs text-gray-500 mt-1">NIK: {umkm.pemilik.nik}</p>
+                            </div>
+                          )}
+
+                          {umkm.legalitas && (
+                            <div className="grid grid-cols-2 gap-2">
+                              <div className="bg-orange-50 rounded p-2">
+                                <p className="text-xs text-gray-500">NIB</p>
+                                <p className="text-xs font-bold text-gray-800">{umkm.legalitas.nib || '-'}</p>
+                              </div>
+                              <div className="bg-orange-50 rounded p-2">
+                                <p className="text-xs text-gray-500">PIRT</p>
+                                <p className="text-xs font-bold text-gray-800">{umkm.legalitas.pirt || '-'}</p>
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-lg p-3">
+                            <p className="text-gray-600 text-xs font-medium mb-1">Omzet Terakhir</p>
+                            <div className="flex items-center justify-between">
+                              <p className="text-lg font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">{umkm.revenue}</p>
+                              {umkm.bulan && (
+                                <span className="text-xs text-gray-500">Bulan {umkm.bulan}</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Footer */}
+                        <button
+                          onClick={() => router.push(`/umkm/${umkm.id}`)}
+                          className="w-full bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white py-4 font-bold transition text-sm uppercase tracking-wider"
+                        >
+                          Manage UMKM
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
