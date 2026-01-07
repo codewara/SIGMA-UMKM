@@ -6,29 +6,30 @@ import { z } from "zod";
 
 // Login schema
 export const loginSchema = z.object({
-    email: z.string().email("Invalid email format"),
+    email: z.email("Invalid email format"),
     password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
 // Registration schema for UMKM_OWNER (simple validation for prototype)
 export const registerOwnerSchema = z.object({
-    email: z.string().email("Invalid email format"),
+    fullName: z.string().min(1, "Full name is required"),
+    NIK: z.string()
+        .length(16, "NIK must be 16 digits")
+        .regex(/^[0-9]+$/, "NIK must contain only numbers"),
+    email: z.email("Invalid email format"),
+    phone: z.string()
+        .min(10, "Phone number too short")
+        .regex(/^[0-9+]+$/, "Invalid phone number format"),
     password: z.string().min(6, "Password must be at least 6 characters"),
-    role: z.literal("UMKM_OWNER"),
-    profile: z.object({
-        nama_lengkap: z.string().min(1, "Full name is required"),
-        nik: z.string()
-            .length(16, "NIK must be 16 digits")
-            .regex(/^[0-9]+$/, "NIK must contain only numbers"),
-        telepon: z.string()
-            .min(10, "Phone number too short")
-            .regex(/^[0-9+]+$/, "Invalid phone number format"),
-    }),
+    passwordConfirm: z.string().min(6, "Password confirmation must be at least 6 characters"),
+}).refine((data) => data.password === data.passwordConfirm, {
+    message: "Passwords do not match",
+    path: ["passwordConfirm"],
 });
 
 // Email verification schema
 export const emailVerificationSchema = z.object({
-    token: z.string().uuid("Invalid verification token"),
+    token: z.uuid("Invalid verification token"),
 });
 
 // Verification decision schema (for PEJABAT/ADMIN)

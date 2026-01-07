@@ -87,44 +87,38 @@ export async function logoutUser(sessionToken: string) {
 
 // Register User
 export async function registerUser(
+    fullName: string,
     email: string,
+    NIK: string,
+    phone: string,
     pass: string,
-    role: "ADMIN" | "PEJABAT" | "UMKM_OWNER",
-    profile?: { nama_lengkap: string; nik: string; telepon: string }
 ) {
     const mongo = await connectMongo();
-
     const existingUser = await mongo.collection("users").findOne({ email });
     if (existingUser) throw new Error("USER_EXISTS");
 
     const userId = uuidv4();
     const hashedPassword = await bcrypt.hash(pass, 12);
 
-    const userData: any = {
+    await mongo.collection("users").insertOne({
         // @ts-expect-error cast _id to UUID
         _id: new UUID(userId),
         email: email,
         password_hash: hashedPassword,
-        role: role,
+        role: "UMKM_OWNER",
         account_status: "unverified",
+        profile: {
+            nama_lengkap: fullName,
+            nik: NIK,
+            telepon: phone,
+        },
         created_at: new Date(),
         expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
-    };
-
-    // Add profile for UMKM_OWNER
-    if (role === "UMKM_OWNER" && profile) {
-        userData.profile = profile;
-    }
-
-    await mongo.collection("users").insertOne(userData);
+    });
     const token = await generateToken(userId, "email_verification");
 
-    try {
-        await sendEmail(email, token);
-    } catch (emailError) {
-        console.warn("Email sending failed (SMTP not configured):", emailError);
-        // Continue - user is created, email can be sent later
-    }
+    try { await sendEmail(email, token); }
+    catch (emailError) { console.warn("Email sending failed (SMTP not configured):", emailError); }
 
     return { userId };
 }
