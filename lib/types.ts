@@ -7,10 +7,15 @@ export interface GlobalDB {
     cassandraClient?: cassandra.Client;
 }
 
+export type UserRole = "PUBLIC" | "UMKM_OWNER" | "PEJABAT" | "ADMIN";
+
 export interface UMKMProfile {
+    _id?: string;
+    owner_id: string;
     nama_usaha: string;
     sektor: "kuliner" | "fashion" | "kriya" | "jasa" | "lainnya";
     tanggal_bergabung: Date;
+    verification_status: "PENDING" | "APPROVED" | "REJECTED";
     pemilik: {
         nama: string;
         nik: string;
@@ -35,4 +40,16 @@ export interface UMKMProfile {
         omzet_terakhir: number;
         bulan: number;
     };
+}
+
+export interface FinancialLog {
+    umkm_id: string;
+    bulan: number;
+    tahun: number;
+    omzet: number;
+    pengeluaran: number;
+    laba: number;
+    tanggal_input: Date;
+    is_flagged?: boolean;
+    flag_reason?: string;
 }

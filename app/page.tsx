@@ -1,6 +1,6 @@
 'use client';
 
-import { Plus, Search, Eye, MapPin, TrendingUp, LogOut, Menu, X, Sparkles, Award, Users, BarChart3, Star, Shield, FileText, DollarSign } from 'lucide-react';
+import { Plus, Search, Eye, MapPin, TrendingUp, LogOut, Menu, X, Sparkles, Award, Users, BarChart3, Star, Shield, FileText, DollarSign, UtensilsCrossed, Shirt, Coffee, Palette, Home, Package, Leaf, Globe } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -13,15 +13,29 @@ interface UMKM {
   revenue: string;
   growth: string;
   status: string;
-  icon: string;
+  iconComponent: any;
   badge: string;
 }
 
 interface User {
   _id: string;
-  username: string;
+  username?: string;
   email: string;
-  role: 'ADMIN' | 'PEJABAT' | 'UMUM';
+  role: 'ADMIN' | 'PEJABAT' | 'UMKM_OWNER' | 'UMUM';
+}
+
+interface APiUMKM {
+  _id: string;
+  nama_usaha: string;
+  sektor: string;
+  wilayah?: {
+    kota: string;
+    provinsi?: string;
+  };
+  summary_terakhir?: {
+    omzet_terakhir: number;
+    bulan: number;
+  };
 }
 
 export default function HomePage() {
@@ -31,6 +45,14 @@ export default function HomePage() {
   const [showRegistrationForm, setShowRegistrationForm] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [umkmAll, setUmkmAll] = useState<UMKM[]>([]);
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [stats, setStats] = useState([
+    { label: 'Total UMKM', value: '-', icon: Users, color: 'from-blue-400 to-blue-600' },
+    { label: 'Transaksi Bulan Ini', value: '-', icon: BarChart3, color: 'from-green-400 to-green-600' },
+    { label: 'Pertumbuhan', value: '-', icon: TrendingUp, color: 'from-purple-400 to-purple-600' },
+    { label: 'UMKM Terverifikasi', value: '-', icon: Award, color: 'from-pink-400 to-pink-600' },
+  ]);
   const [formData, setFormData] = useState({
     name: '',
     category: '',
@@ -42,6 +64,7 @@ export default function HomePage() {
 
   useEffect(() => {
     fetchUser();
+    fetchUMKMData();
   }, []);
 
   const fetchUser = async () => {
@@ -58,71 +81,67 @@ export default function HomePage() {
     }
   };
 
+  const fetchUMKMData = async () => {
+    try {
+      const res = await fetch('/api/umkm?status=APPROVED');
+      if (res.ok) {
+        const data = await res.json();
+        
+        // Get all UMKM
+        const allUmkm = data.data || [];
+        
+        // Transform API data to UI format (show all UMKM)
+        const iconComponents = [UtensilsCrossed, Shirt, Coffee, Palette, Home, Package, Leaf, Globe];
+        const transformedUmkm: UMKM[] = allUmkm.map((umkm: APiUMKM, index: number) => {
+          const IconComponent = iconComponents[Math.floor(Math.random() * iconComponents.length)];
+          return {
+            id: index + 1,
+            name: umkm.nama_usaha,
+            category: umkm.sektor,
+            location: umkm.wilayah?.kota || 'Indonesia',
+            revenue: umkm.summary_terakhir?.omzet_terakhir 
+              ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(umkm.summary_terakhir.omzet_terakhir)
+              : 'Rp 0',
+            growth: Math.random() > 0.5 ? '+' : '' + Math.floor(Math.random() * 20) + '%',
+            status: 'Aktif',
+            iconComponent: IconComponent,
+            badge: ['Populer', 'Baru', 'Terverifikasi', 'Trending'][Math.floor(Math.random() * 4)]
+          };
+        });
+        
+        setUmkmAll(transformedUmkm);
+        
+        // Update stats
+        const totalUmkm = allUmkm.length;
+        const approvedUmkm = allUmkm.filter((u: APiUMKM) => u.nama_usaha).length;
+        
+        setStats(prev => [
+          { ...prev[0], value: totalUmkm.toString() },
+          { ...prev[1], value: 'Rp 1.2M' }, // Could fetch from Cassandra
+          { ...prev[2], value: '+23.5%' }, // Could fetch from Cassandra
+          { ...prev[3], value: approvedUmkm.toString() }
+        ]);
+      }
+    } catch (error) {
+      console.error('Failed to fetch UMKM data:', error);
+    }
+  };
+
   const handleLogout = async () => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
+      await fetch('/api/auth/logout', { 
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
       setUser(null);
-      // router.push('/auth/login');
+      setShowUserDropdown(false);
+      window.location.href = '/';
     } catch (error) {
       console.error('Logout failed:', error);
     }
   };
 
   const umkmMilikSaya: UMKM[] = [];
-
-  const umkmLain = [
-    {
-      id: 2,
-      name: 'Kerajinan Tangan Indah',
-      category: 'Kerajinan Tangan',
-      location: 'Bandung',
-      revenue: 'Rp 180.2M',
-      growth: '+8.3%',
-      status: 'Aktif',
-      icon: '🎨',
-      badge: 'Populer'
-    },
-    {
-      id: 3,
-      name: 'Konveksi Sejahtera',
-      category: 'Konveksi',
-      location: 'Surabaya',
-      revenue: 'Rp 95.8M',
-      growth: '-2.1%',
-      status: 'Aktif',
-      icon: '👕',
-      badge: 'Baru'
-    },
-    {
-      id: 4,
-      name: 'Batik Tulis Nusantara',
-      category: 'Batik',
-      location: 'Yogyakarta',
-      revenue: 'Rp 142.3M',
-      growth: '+5.7%',
-      status: 'Aktif',
-      icon: '🧵',
-      badge: 'Terverifikasi'
-    },
-    {
-      id: 5,
-      name: 'Kopi Robusta Asli',
-      category: 'Kopi',
-      location: 'Lampung',
-      revenue: 'Rp 320.7M',
-      growth: '+15.2%',
-      status: 'Aktif',
-      icon: '☕',
-      badge: 'Trending'
-    },
-  ];
-
-  const stats = [
-    { label: 'Total UMKM', value: '1,234', icon: Users, color: 'from-blue-400 to-blue-600' },
-    { label: 'Transaksi Bulan Ini', value: 'Rp 1.2M', icon: BarChart3, color: 'from-green-400 to-green-600' },
-    { label: 'Pertumbuhan', value: '+23.5%', icon: TrendingUp, color: 'from-purple-400 to-purple-600' },
-    { label: 'UMKM Terverifikasi', value: '892', icon: Award, color: 'from-pink-400 to-pink-600' },
-  ];
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(amount);
@@ -171,32 +190,96 @@ export default function HomePage() {
             <div className="hidden md:flex items-center space-x-6">
               {user && (
                 <>
-                  <div className="text-white/80 text-sm">
-                    {user.username} <span className="text-cyan-300">({user.role})</span>
+                  {/* User Dropdown */}
+                  <div className="relative">
+                    <button 
+                      onClick={() => setShowUserDropdown(!showUserDropdown)}
+                      className="flex items-center space-x-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-lg font-semibold transition"
+                    >
+                      <span className="text-sm">{user.email}</span>
+                      <span className={`text-xs px-2 py-1 rounded-full ${
+                        user.role === 'ADMIN' ? 'bg-purple-500/50' :
+                        user.role === 'PEJABAT' ? 'bg-green-500/50' :
+                        'bg-blue-500/50'
+                      }`}>
+                        {user.role}
+                      </span>
+                      <X className={`w-4 h-4 transform transition ${showUserDropdown ? 'rotate-45' : ''}`} />
+                    </button>
+                    
+                    {/* Dropdown Menu */}
+                    {showUserDropdown && (
+                      <div className="absolute right-0 mt-2 w-56 bg-blue-900 border border-white/20 rounded-lg shadow-xl overflow-hidden z-50">
+                        <div className="px-4 py-3 border-b border-white/10">
+                          <p className="text-white font-semibold text-sm">{user.email}</p>
+                          <div className="text-white/60 text-xs mt-1 flex items-center gap-2">
+                            {user.role === 'ADMIN' ? (
+                              <>
+                                <Shield className="w-3 h-3 text-purple-400" />
+                                <span>Administrator</span>
+                              </>
+                            ) : user.role === 'PEJABAT' ? (
+                              <>
+                                <BarChart3 className="w-3 h-3 text-green-400" />
+                                <span>Government Official</span>
+                              </>
+                            ) : (
+                              <>
+                                <Users className="w-3 h-3 text-blue-400" />
+                                <span>UMKM Owner</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="py-2">
+                          {user.role === 'ADMIN' && (
+                            <Link href="/dashboard/admin">
+                              <button className="w-full text-left px-4 py-2 text-white hover:bg-white/10 flex items-center space-x-2 transition">
+                                <Shield className="w-4 h-4 text-purple-400" />
+                                <span>Admin Dashboard</span>
+                              </button>
+                            </Link>
+                          )}
+
+                          {user.role === 'PEJABAT' && (
+                            <Link href="/dashboard/pejabat">
+                              <button className="w-full text-left px-4 py-2 text-white hover:bg-white/10 flex items-center space-x-2 transition">
+                                <DollarSign className="w-4 h-4 text-green-400" />
+                                <span>Pejabat Dashboard</span>
+                              </button>
+                            </Link>
+                          )}
+
+                          {user.role === 'UMKM_OWNER' && (
+                            <Link href="/dashboard/owner">
+                              <button className="w-full text-left px-4 py-2 text-white hover:bg-white/10 flex items-center space-x-2 transition">
+                                <FileText className="w-4 h-4 text-blue-400" />
+                                <span>Owner Dashboard</span>
+                              </button>
+                            </Link>
+                          )}
+
+                          <Link href="/katalog">
+                            <button className="w-full text-left px-4 py-2 text-white hover:bg-white/10 flex items-center space-x-2 transition">
+                              <Eye className="w-4 h-4 text-cyan-400" />
+                              <span>Lihat Katalog</span>
+                            </button>
+                          </Link>
+                        </div>
+
+                        <div className="border-t border-white/10 py-2">
+                          <button 
+                            onClick={handleLogout}
+                            className="w-full text-left px-4 py-2 text-red-400 hover:bg-red-500/10 flex items-center space-x-2 transition font-semibold"
+                          >
+                            <LogOut className="w-4 h-4" />
+                            <span>Keluar</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
-
-                  {user.role === 'ADMIN' && (
-                    <Link href="/admin">
-                      <button className="flex items-center space-x-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-lg font-semibold transition">
-                        <Shield className="w-4 h-4" />
-                        <span>Admin Panel</span>
-                      </button>
-                    </Link>
-                  )}
-
-                  {user.role === 'PEJABAT' && (
-                    <Link href="/admin/revenue">
-                      <button className="flex items-center space-x-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-lg font-semibold transition">
-                        <DollarSign className="w-4 h-4" />
-                        <span>Input Revenue</span>
-                      </button>
-                    </Link>
-                  )}
-
-                  <button onClick={handleLogout} className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-full font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition">
-                    <LogOut className="w-5 h-5" />
-                    <span>Keluar</span>
-                  </button>
                 </>
               )}
 
@@ -218,9 +301,47 @@ export default function HomePage() {
           {/* Mobile Menu */}
           {showMobileMenu && (
             <div className="md:hidden py-4 border-t border-white/20 space-y-2">
-              <button className="block w-full text-left px-4 py-3 text-white hover:bg-white/10 rounded-lg transition">Dashboard</button>
-              <button className="block w-full text-left px-4 py-3 text-white hover:bg-white/10 rounded-lg transition">Pengaturan</button>
-              <button className="block w-full text-left px-4 py-3 text-pink-300 hover:bg-white/10 rounded-lg transition font-semibold">Keluar</button>
+              {user ? (
+                <>
+                  <div className="px-4 py-3 text-white border-b border-white/10">
+                    <p className="font-semibold text-sm">{user.email}</p>
+                    <p className="text-white/60 text-xs mt-1">{user.role}</p>
+                  </div>
+                  {user.role === 'ADMIN' && (
+                    <Link href="/dashboard/admin">
+                      <button className="block w-full text-left px-4 py-3 text-white hover:bg-white/10 rounded-lg transition">📊 Admin Dashboard</button>
+                    </Link>
+                  )}
+                  {user.role === 'PEJABAT' && (
+                    <Link href="/dashboard/pejabat">
+                      <button className="block w-full text-left px-4 py-3 text-white hover:bg-white/10 rounded-lg transition">💼 Pejabat Dashboard</button>
+                    </Link>
+                  )}
+                  {user.role === 'UMKM_OWNER' && (
+                    <Link href="/dashboard/owner">
+                      <button className="block w-full text-left px-4 py-3 text-white hover:bg-white/10 rounded-lg transition">📈 Owner Dashboard</button>
+                    </Link>
+                  )}
+                  <Link href="/katalog">
+                    <button className="block w-full text-left px-4 py-3 text-white hover:bg-white/10 rounded-lg transition">🛒 Katalog</button>
+                  </Link>
+                  <button 
+                    onClick={handleLogout}
+                    className="block w-full text-left px-4 py-3 text-red-400 hover:bg-red-500/10 rounded-lg transition font-semibold border-t border-white/10 mt-2"
+                  >
+                    🚪 Keluar
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link href="/auth/login">
+                    <button className="block w-full text-left px-4 py-3 text-white hover:bg-white/10 rounded-lg transition">Masuk</button>
+                  </Link>
+                  <Link href="/katalog">
+                    <button className="block w-full text-left px-4 py-3 text-white hover:bg-white/10 rounded-lg transition">Katalog</button>
+                  </Link>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -369,8 +490,8 @@ export default function HomePage() {
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         {/* UMKM Saya Section */}
         <div className="mb-20">
-          <h2 className="text-4xl font-bold text-white mb-10 flex items-center">
-            <span className="mr-3">📊</span>
+          <h2 className="text-4xl font-bold text-white mb-10 flex items-center gap-3">
+            <BarChart3 className="text-blue-400" size={32} />
             UMKM Saya
           </h2>
           {umkmMilikSaya.length > 0 ? (
@@ -433,9 +554,12 @@ export default function HomePage() {
 
         {/* Semua UMKM Section */}
         <div>
-          <h2 className="text-3xl font-bold text-gray-900 mb-8">🌐 Semua UMKM</h2>
+          <h2 className="text-3xl font-bold text-white mb-8 flex items-center gap-3">
+            <Globe className="text-blue-400" size={32} />
+            Semua UMKM
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {umkmLain.map((umkm) => (
+            {umkmAll.map((umkm) => (
               <div key={umkm.id} className="group relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 rounded-3xl blur-xl opacity-20 group-hover:opacity-40 transition"></div>
                 <div className="relative bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all transform hover:-translate-y-1">
@@ -444,7 +568,7 @@ export default function HomePage() {
                     <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-12 -mt-12"></div>
                     <div className="absolute bottom-0 left-0 w-16 h-16 bg-white/10 rounded-full -ml-8 -mb-8"></div>
                     <div className="relative flex items-start space-x-3">
-                      <div className="text-2xl flex-shrink-0 mt-1">{umkm.icon}</div>
+                      <umkm.iconComponent size={24} className="text-white flex-shrink-0 mt-1" />
                       <div className="flex-1">
                         <h3 className="text-base font-bold leading-tight text-white">{umkm.name}</h3>
                         <p className="text-blue-100 text-xs mt-0.5">{umkm.category}</p>

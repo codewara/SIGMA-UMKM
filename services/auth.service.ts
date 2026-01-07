@@ -19,7 +19,7 @@ export async function authenticateUser(email: string, pass: string, ip: string, 
 
     // Verify Credentials
     const user = await mongo.collection("users").findOne({ email });
-    const isValid = user && await bcrypt.compare(pass, user.password_hash);
+    const isValid = user && user.account_status === "active" && await bcrypt.compare(pass, user.password_hash);
 
     if (!isValid) {
         await Promise.all([

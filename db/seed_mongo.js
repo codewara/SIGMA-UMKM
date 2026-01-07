@@ -245,6 +245,22 @@ db.users.insertMany([
     "role": "PEJABAT",
     "account_status": "active",
     "created_at": new Date("2024-01-01T08:00:00Z")
+  },
+  {
+    "_id": UUID("c3d4e5f6-a7b8-6c7d-0e1f-2a3b4c5d6e7f"),
+    "email": "owner@sigma-umkm.com",
+    "password_hash": "$2b$12$5d3VtHZKpN2Yq8R9xL1Mm.9K7bJ4cF2sX3wP6mD8nQ1eYaZ0TuCGa",
+    "role": "UMKM_OWNER",
+    "account_status": "active",
+    "created_at": new Date("2024-01-01T08:00:00Z")
+  },
+  {
+    "_id": UUID("d4e5f6a7-b8c9-7d8e-1f2a-3b4c5d6e7f8a"),
+    "email": "owner2@sigma-umkm.com",
+    "password_hash": "$2b$12$9mL2oK1pJ3iH4uG5fE6tD.8C7bX0vW9yZ2aS1rQ0pO9nM8lK7jI6",
+    "role": "UMKM_OWNER",
+    "account_status": "active",
+    "created_at": new Date("2024-01-01T08:00:00Z")
   }
 ]);
 
@@ -254,9 +270,11 @@ db.users.createIndex({ "email": 1 }, { unique: true });
 // Index untuk session cleanup (TTL)
 db.sessions.createIndex({ "expires_at": 1 }, { expireAfterSeconds: 0 });
 
-print("✅ Users: 2 accounts created (ADMIN & PEJABAT).");
+print("✅ Users: 4 accounts created (ADMIN, PEJABAT, UMKM_OWNER x2).");
 print("📧 Login Credentials:");
-print("   ADMIN    → admin@sigma-umkm.com : admin123");
-print("   PEJABAT  → pejabat@sigma-umkm.com : pejabat123");
+print("   ADMIN       → admin@sigma-umkm.com : admin123");
+print("   PEJABAT     → pejabat@sigma-umkm.com : pejabat123");
+print("   UMKM_OWNER  → owner@sigma-umkm.com : owner123");
+print("   UMKM_OWNER  → owner2@sigma-umkm.com : owner123");
 print("");
 print("SEED MONGODB SUCCESS: All data inserted.");

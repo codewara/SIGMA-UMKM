@@ -1,13 +1,20 @@
 'use client';
 
-import { Menu, LogOut, TrendingUp, BarChart3, ArrowUp, ArrowDown, MapPin, Users, Map } from 'lucide-react';
-import { useState } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function AdminGrowthPage() {
-  const [showSidebar, setShowSidebar] = useState(false);
-  const pathname = usePathname();
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace('/dashboard/admin/growth');
+  }, [router]);
+
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-slate-900">
+      <p className="text-slate-400">Redirecting to Admin Dashboard...</p>
+    </div>
+  );
 
   const allGrowthData = [
     { id: 1, umkm: 'Jasa Fotografi Profesional', growth: 25.4, lastMonth: 90, currentMonth: 112.6 },
