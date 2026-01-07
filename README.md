@@ -356,11 +356,33 @@ sequenceDiagram
 
 ## 📝 API Endpoints
 
+### 🧪 Testing
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/test` | Database connection test |
-| POST | `/api/auth/register` | User registration |
-| GET | `/api/auth/verify-email` | Email verification |
-| POST | `/api/auth/login` | User login |
-| GET | `/api/umkm` | List all UMKMs (from MongoDB) |
-| POST | `/api/umkm` | Register new UMKM |
+| GET | `/api/test` | Database connection test (MongoDB + Cassandra) |
+
+### 🔐 Authentication
+| Method | Endpoint | Description | Request Body |
+|--------|----------|-------------|--------------|
+| POST | `/api/auth/register` | User registration | `{ email, password }` |
+| GET | `/api/auth/verify-email?token={token}` | Email verification via token | - |
+| POST | `/api/auth/login` | User login with rate limiting | `{ email, password }` |
+| POST | `/api/auth/logout` | User logout (invalidate session) | `{ sessionToken }` |
+
+### 🏢 UMKM Profile Management (MongoDB)
+| Method | Endpoint | Description | Request Body |
+|--------|----------|-------------|--------------|
+| GET | `/api/umkm` | List all UMKMs | - |
+| POST | `/api/umkm` | Register new UMKM profile | `{ nama_usaha, sektor, pemilik, lokasi, wilayah, legalitas }` |
+| GET | `/api/umkm/[id]` | Get UMKM profile by ID | - |
+| PATCH | `/api/umkm/[id]` | Update UMKM profile | Partial fields |
+| DELETE | `/api/umkm/[id]` | Delete UMKM profile | - |
+
+### 📊 Financial Analytics (Cassandra)
+| Method | Endpoint | Description | Query Params | Request Body |
+|--------|----------|-------------|--------------|--------------|
+| GET | `/api/analytics/financial` | Get all financial logs | - | - |
+| GET | `/api/analytics/financial/[umkm_id]` | Get financial logs by UMKM ID | `?tahun=2024` | - |
+| POST | `/api/analytics/financial/[umkm_id]` | Create financial log entry | - | `{ tahun, bulan, omzet, jumlah_karyawan, nama_usaha, sektor }` |
+| PATCH | `/api/analytics/financial/[umkm_id]` | Update financial log entry | `?tahun=2024&bulan=6` | Partial fields |
+| DELETE | `/api/analytics/financial/[umkm_id]` | Delete financial log entry | `?tahun=2024&bulan=6` | - |
