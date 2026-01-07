@@ -36,3 +36,45 @@ export interface UMKMProfile {
         bulan: number;
     };
 }
+
+// Client-side types
+export interface User {
+    _id: string;
+    username: string;
+    email: string;
+    role: 'ADMIN' | 'PEJABAT' | 'UMKM_OWNER';
+}
+
+export interface UMKM {
+    id: string;
+    name: string;
+    category: string;
+    location: string;
+    revenue: string;
+    growth: string;
+    status: string;
+    icon: string;
+    badge: string;
+    // Additional fields from API
+    wilayah?: {
+        kota: string;
+        provinsi: string;
+        alamat_lengkap: string;
+    };
+    tanggal_bergabung?: Date;
+    pemilik?: {
+        nama: string;
+        nik: string;
+        telepon: string;
+        email: string;
+    };
+    legalitas?: {
+        nib: string;
+        pirt: string;
+        halal: boolean;
+        status_verifikasi: string;
+    };
+    is_deleted?: boolean;
+    omzet_terakhir?: number;
+    bulan?: number;
+}
