@@ -47,26 +47,33 @@ export default function PetaPage() {
     const sectors = ['semua', ...Array.from(new Set(umkms.map(u => u.sektor)))];
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-[#0f172a] relative overflow-hidden">
+            {/* Background Elements */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute top-20 left-10 w-72 h-72 bg-purple-500/20 rounded-full blur-3xl animate-pulse"></div>
+                <div className="absolute top-40 right-20 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+                <div className="absolute bottom-20 left-1/4 w-80 h-80 bg-purple-600/15 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
+            </div>
+
             {/* Header */}
-            <div className="bg-white border-b border-gray-200">
+            <div className="relative backdrop-blur-xl bg-white/5 border-b border-white/10">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    <h1 className="text-3xl font-bold text-gray-900">Peta Distribusi UMKM</h1>
-                    <p className="text-gray-600 mt-2">Lihat lokasi dan sebaran UMKM di seluruh wilayah</p>
+                    <h1 className="text-3xl font-bold text-white">Peta Distribusi UMKM</h1>
+                    <p className="text-gray-300 mt-2">Lihat lokasi dan sebaran UMKM di seluruh wilayah</p>
                 </div>
             </div>
 
             {/* Content */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Filter */}
-                <div className="bg-white p-4 rounded-lg border border-gray-200 mb-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="bg-white/10 backdrop-blur-xl p-4 rounded-2xl border border-white/20 mb-6">
+                    <label className="block text-sm font-medium text-white/80 mb-2">
                         Filter Sektor
                     </label>
                     <select
                         value={selectedSector}
                         onChange={(e) => setSelectedSector(e.target.value)}
-                        className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="px-4 py-2 bg-white/20 border border-white/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400 text-white"
                     >
                         {sectors.map(sector => (
                             <option key={sector} value={sector}>
@@ -80,13 +87,13 @@ export default function PetaPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Map */}
                     <div className="lg:col-span-2">
-                        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden h-96 flex items-center justify-center">
+                        <div className="bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 overflow-hidden h-96 flex items-center justify-center group">
                             <div className="text-center">
-                                <MapPin className="mx-auto mb-4 text-gray-400" size={48} />
-                                <p className="text-gray-600">
+                                <MapPin className="mx-auto mb-4 text-purple-400 group-hover:text-purple-300 transition" size={48} />
+                                <p className="text-white/80">
                                     Integrasi map akan ditampilkan di sini
                                 </p>
-                                <p className="text-gray-500 text-sm mt-1">
+                                <p className="text-white/50 text-sm mt-1">
                                     (Gunakan library seperti Leaflet atau Mapbox)
                                 </p>
                             </div>
@@ -94,30 +101,30 @@ export default function PetaPage() {
                     </div>
 
                     {/* Sidebar - UMKM List */}
-                    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden flex flex-col h-96">
-                        <div className="p-4 border-b border-gray-200">
-                            <h2 className="font-semibold text-gray-900">
+                    <div className="bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 overflow-hidden flex flex-col h-96">
+                        <div className="p-4 border-b border-white/10 bg-gradient-to-r from-white/5 to-white/0">
+                            <h2 className="font-semibold text-white">
                                 UMKM Terdekat ({filteredUmkms.length})
                             </h2>
                         </div>
-                        <div className="flex-1 overflow-y-auto divide-y divide-gray-200">
+                        <div className="flex-1 overflow-y-auto divide-y divide-white/10">
                             {loading ? (
                                 <div className="flex items-center justify-center h-full">
-                                    <Loader className="animate-spin text-gray-400" size={24} />
+                                    <Loader className="animate-spin text-purple-400" size={24} />
                                 </div>
                             ) : filteredUmkms.length === 0 ? (
-                                <div className="p-4 text-center text-gray-600">
+                                <div className="p-4 text-center text-white/60">
                                     Tidak ada UMKM di sektor ini
                                 </div>
                             ) : (
                                 filteredUmkms.slice(0, 10).map(umkm => (
                                     <div
                                         key={umkm._id}
-                                        className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                                        className="p-4 hover:bg-white/10 cursor-pointer transition-colors"
                                     >
-                                        <h3 className="font-medium text-gray-900">{umkm.nama_usaha}</h3>
-                                        <p className="text-sm text-gray-600 mt-1">{umkm.sektor}</p>
-                                        <p className="text-xs text-gray-500 mt-1">
+                                        <h3 className="font-medium text-white">{umkm.nama_usaha}</h3>
+                                        <p className="text-sm text-white/70 mt-1">{umkm.sektor}</p>
+                                        <p className="text-xs text-white/50 mt-1">
                                             {umkm.wilayah.kota}, {umkm.wilayah.provinsi}
                                         </p>
                                     </div>
