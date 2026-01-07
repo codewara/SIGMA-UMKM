@@ -18,17 +18,17 @@ export default function RegisterPage() {
     const payload = Object.fromEntries(formData.entries());
 
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
 
       const data = await response.json();
-      if (!response.ok) alert(`Login failed: ${data.error || 'Unknown error'}`);
+      if (!response.ok) alert(`Registration failed: ${data.error || 'Unknown error'}`);
       else router.replace(data.redirect);
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('Registration error:', error);
     }
     finally { setLoading(false); }
   }
@@ -87,7 +87,7 @@ export default function RegisterPage() {
                   <input
                     type="text"
                     placeholder="NIK"
-                    name="nik"
+                    name="NIK"
                     required
                     className="w-full pl-12 pr-4 py-3 bg-white/10 border border-white/20 rounded-2xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200"
                   />

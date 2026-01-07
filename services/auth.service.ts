@@ -88,8 +88,8 @@ export async function logoutUser(sessionToken: string) {
 // Register User
 export async function registerUser(
     fullName: string,
-    email: string,
     NIK: string,
+    email: string,
     phone: string,
     pass: string,
 ) {
