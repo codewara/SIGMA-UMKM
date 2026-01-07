@@ -39,13 +39,16 @@ erDiagram
     %% Main Business Collection
     UMKM_PROFILES {
         uuid _id PK "UUID format, synced with Cassandra"
+        uuid owner_id FK "UMKM_OWNER who registered"
         string nama_usaha
         string sektor "e.g. Kuliner, Fashion, Kriya"
         date tanggal_bergabung
         object pemilik "Embedded: nama, nik, telepon, email"
         object lokasi "GeoJSON Point [long, lat]"
         object wilayah "Embedded: kota, provinsi, alamat_lengkap"
-        object legalitas "Embedded: nib, pirt, halal"
+        object legalitas "Embedded: nib, pirt, halal, dokumen_url, status_verifikasi, verified_by, tanggal_verifikasi, rejection_reason"
+        boolean is_deleted "Soft delete flag"
+        date deleted_at "Soft delete timestamp"
         object summary_terakhir "Cache: omzet_terakhir, bulan"
     }
     
@@ -54,8 +57,9 @@ erDiagram
         uuid _id PK
         string email UK "Unique index"
         string password_hash "bcrypt hashed"
-        string role "ADMIN | PEJABAT | UMUM"
+        string role "ADMIN | PEJABAT | UMKM_OWNER"
         string account_status "unverified | active"
+        object profile "For UMKM_OWNER: nama_lengkap, nik, telepon"
         date created_at
         date expires_at "Account expiry for unverified"
     }
@@ -67,7 +71,11 @@ erDiagram
     }
     
     %% Relationships
-    USERS ||--o{ SESSIONS : "has_many"
+    %% One User (Owner) manages Many UMKMs
+    USERS ||--o{ UMKM_PROFILES : "owns_and_manages"
+    
+    %% One User has Many Sessions
+    USERS ||--o{ SESSIONS : "has_active"
 ```
 
 **Embedded Document Details:**
@@ -94,11 +102,16 @@ erDiagram
   "alamat_lengkap": "string (optional)"
 }
 
-// legalitas (business permits)
+// legalitas (business permits & verification status)
 {
   "nib": "string (optional)",
   "pirt": "string (optional)",
-  "halal": "boolean (optional)"
+  "halal": "boolean (optional)",
+  "dokumen_url": "string (optional) - URL to uploaded documents",
+  "status_verifikasi": "PENDING | VERIFIED | REJECTED",
+  "verified_by": "uuid (optional) - PEJABAT who verified",
+  "tanggal_verifikasi": "Date (optional)",
+  "rejection_reason": "string (optional)"
 }
 
 // summary_terakhir (cached financial data to avoid cross-DB joins)
@@ -133,6 +146,11 @@ erDiagram
         int jumlah_karyawan
         text nama_usaha "Denormalized"
         text sektor "Denormalized"
+        boolean is_flagged "PEJABAT flag for suspicious data"
+        text flag_reason "Reason for flagging"
+        uuid flagged_by "PEJABAT who flagged"
+        timestamp flagged_at "When flagged"
+        uuid input_by "UMKM_OWNER who input data"
     }
 
     %% Tabel Agregasi Sektor
@@ -184,6 +202,25 @@ erDiagram
         uuid user_id
         text purpose "password_reset | email_verification"
     }
+    
+    VERIFICATION_TASKS {
+        text status PK "Partition Key: PENDING|VERIFIED|REJECTED"
+        timestamp created_at PK "Clustering Key DESC"
+        uuid umkm_id
+        text nama_usaha
+        text owner_email
+    }
+    
+    FLAG_NOTIFICATIONS {
+        uuid owner_id PK "Partition Key"
+        timestamp created_at PK "Clustering Key DESC"
+        uuid umkm_id
+        int bulan
+        int tahun
+        text flag_reason
+        text flagged_by_name
+        boolean is_read
+    }
 ```
 
 **Key Tables:**
@@ -197,6 +234,8 @@ erDiagram
 | `login_logs` | user_id | login_time DESC | Audit trail for user authentication |
 | `login_attempts` | ip_address | - | Rate limiting with counter type |
 | `temp_tokens` | token_value | - | TTL 15 mins for email verification/password reset |
+| `verification_tasks` | status | created_at DESC | PEJABAT task queue for UMKM verification |
+| `flag_notifications` | owner_id | created_at DESC | Notifications for UMKM_OWNER about flagged data |
 
 ## 🗂️ Project Structure
 
@@ -277,7 +316,7 @@ docker exec -it sigma-mongo mongosh -u mongo_username -p mongo_password --authen
 
 This will create:
 - ✅ 10 UMKM profiles (Kuliner, Fashion, Jasa, Kriya)
-- ✅ 2 pre-configured user accounts (ADMIN & PEJABAT)
+- ✅ 3 pre-configured user accounts (ADMIN, PEJABAT, UMKM_OWNER)
 
 **Cassandra (financial time-series data):**
 ```bash
@@ -303,7 +342,8 @@ The MongoDB seeder automatically creates these accounts for testing:
 | Role | Email | Password | Access Level |
 |------|-------|----------|--------------|
 | **ADMIN** | admin@sigma-umkm.com | admin123 | Full system access |
-| **PEJABAT** | pejabat@sigma-umkm.com | pejabat123 | Revenue input + full dashboard |
+| **PEJABAT** | pejabat@sigma-umkm.com | pejabat123 | Verify UMKMs + flag revenue data |
+| **UMKM_OWNER** | owner@sigma-umkm.com | owner123 | Register UMKM + input own revenue |
 
 **Login at:** [http://localhost:3000/auth/login](http://localhost:3000/auth/login)
 
@@ -370,36 +410,47 @@ sequenceDiagram
 | Role | Description |
 |------|-------------|
 | **ADMIN** | Full system access - manage UMKM profiles, edit/delete data, view all details |
-| **PEJABAT** | Government official - **primary role for inputting monthly revenue**, view full dashboard |
+| **PEJABAT** | Government official - **primary focus: verify UMKM profiles, flag suspicious revenue data**, view full dashboard |
+| **UMKM_OWNER** | Business owner - register UMKM profile, input monthly revenue, view own UMKM data |
 | **Unauthenticated (Public)** | No login required - automatically receive aggregated/restricted data only |
 
-**Note:** Only ADMIN and PEJABAT users need accounts. Public visitors can browse without registration.
+**Note:** ADMIN, PEJABAT, and UMKM_OWNER require registered accounts. Public visitors can browse without registration.
 
 ### Access Matrix
 
-| Feature / Action | ADMIN | PEJABAT | Public (No Login) | Database |
-|------------------|-------|---------|-------------------|-----------|
-| **Tambah UMKM Baru** | ✅ YES | ❌ NO | ❌ NO | MongoDB |
-| **Edit Profil UMKM** | ✅ YES | ❌ NO | ❌ NO | MongoDB |
-| **Hapus UMKM** | ✅ YES | ❌ NO | ❌ NO | MongoDB |
-| **Input Omzet Bulanan** | ⚠️ Can | ✅ **PRIMARY FOCUS** | ❌ NO | Cassandra |
-| **Lihat Dashboard** | ✅ Full Data | ✅ Full Data | ⚠️ Aggregated Only | Cassandra |
-| **Lihat Detail UMKM** | ✅ Full (with contact) | ✅ Full (with contact) | ⚠️ Basic Info Only | MongoDB |
+| Feature / Action | ADMIN | PEJABAT | UMKM_OWNER | Public (No Login) | Database |
+|------------------|-------|---------|------------|-------------------|----------|
+| **Tambah UMKM Baru** | ✅ YES | ❌ NO | ✅ Own Profile | ❌ NO | MongoDB |
+| **Edit Profil UMKM** | ✅ YES | ❌ NO | ✅ Own Profile | ❌ NO | MongoDB |
+| **Hapus UMKM** | ✅ YES | ❌ NO | ❌ NO | ❌ NO | MongoDB |
+| **Verifikasi UMKM** | ✅ YES | ✅ **PRIMARY FOCUS** | ❌ NO | ❌ NO | MongoDB + Cassandra |
+| **Input Omzet Bulanan** | ⚠️ Can | ⚠️ Can | ✅ Own UMKM | ❌ NO | Cassandra |
+| **Flag Omzet Suspicious** | ✅ YES | ✅ **PRIMARY FOCUS** | ❌ NO | ❌ NO | Cassandra |
+| **Lihat Dashboard** | ✅ Full Data | ✅ Full Data | ✅ Own UMKM | ⚠️ Aggregated Only | Cassandra |
+| **Lihat Detail UMKM** | ✅ Full (with contact) | ✅ Full (with contact) | ✅ Own Profile | ⚠️ Basic Info Only | MongoDB |
 
 ### API Endpoint Permissions
 
-| Endpoint | ADMIN | PEJABAT | Public (No Login) |
-|----------|-------|---------|-------------------|
-| `GET /api/umkm` | Full data | Full data | Basic info only (nama, sektor, kota) |
-| `POST /api/umkm` | ✅ | ❌ | ❌ |
-| `GET /api/umkm/[id]` | Full + contact | Full + contact | Basic only |
-| `PATCH /api/umkm/[id]` | ✅ | ❌ | ❌ |
-| `DELETE /api/umkm/[id]` | ✅ | ❌ | ❌ |
-| `GET /api/analytics/financial` | Full data | Full data | Aggregated stats only |
-| `GET /api/analytics/financial/[umkm_id]` | ✅ | ✅ | ❌ |
-| `POST /api/analytics/financial/[umkm_id]` | ✅ | ✅ ⭐ | ❌ |
-| `PATCH /api/analytics/financial/[umkm_id]` | ✅ | ❌ | ❌ |
-| `DELETE /api/analytics/financial/[umkm_id]` | ✅ | ❌ | ❌ |
+| Endpoint | ADMIN | PEJABAT | UMKM_OWNER | Public (No Login) |
+|----------|-------|---------|------------|-------------------|
+| `GET /api/umkm` | Full data | Full data | Own UMKMs | Basic info only (nama, sektor, kota) |
+| `POST /api/umkm` | ✅ | ❌ | ✅ (auto-assign owner_id) | ❌ |
+| `GET /api/umkm/[id]` | Full + contact | Full + contact | Own UMKM | Basic only |
+| `PATCH /api/umkm/[id]` | ✅ | ❌ | ✅ Own UMKM | ❌ |
+| `DELETE /api/umkm/[id]` | ✅ (soft delete) | ❌ | ❌ | ❌ |
+| `GET /api/analytics/financial` | Full data | Full data | Own UMKMs | Aggregated stats only |
+| `GET /api/analytics/financial/[umkm_id]` | ✅ | ✅ | ✅ Own UMKM | ❌ |
+| `POST /api/analytics/financial/[umkm_id]` | ✅ | ✅ | ✅ Own UMKM | ❌ |
+| `PATCH /api/analytics/financial/[umkm_id]` | ✅ | ❌ | ❌ | ❌ |
+| `DELETE /api/analytics/financial/[umkm_id]` | ✅ | ❌ | ❌ | ❌ |
+| `GET /api/verification/pending` | ✅ | ✅ ⭐ | ❌ | ❌ |
+| `POST /api/verification/[id]/approve` | ✅ | ✅ ⭐ | ❌ | ❌ |
+| `POST /api/verification/[id]/reject` | ✅ | ✅ ⭐ | ❌ | ❌ |
+| `POST /api/financial/[umkm_id]/[tahun]/[bulan]/flag` | ✅ | ✅ ⭐ | ❌ | ❌ |
+| `DELETE /api/financial/[umkm_id]/[tahun]/[bulan]/flag` | ✅ | ✅ | ❌ | ❌ |
+| `GET /api/notifications` | ❌ | ❌ | ✅ Own notifications | ❌ |
+| `PATCH /api/notifications/[id]/read` | ❌ | ❌ | ✅ Own notification | ❌ |
+| `GET /api/dashboard/owner` | ❌ | ❌ | ✅ Own UMKM stats | ❌ |
 
 ⭐ **PRIMARY FOCUS**: Main responsibility for PEJABAT role
 
@@ -464,3 +515,26 @@ sequenceDiagram
 | POST | `/api/analytics/financial/[umkm_id]` | Create financial log entry | - | `{ tahun, bulan, omzet, jumlah_karyawan, nama_usaha, sektor }` |
 | PATCH | `/api/analytics/financial/[umkm_id]` | Update financial log entry | `?tahun=2024&bulan=6` | Partial fields |
 | DELETE | `/api/analytics/financial/[umkm_id]` | Delete financial log entry | `?tahun=2024&bulan=6` | - |
+### 🚩 Flag Management (PEJABAT - Cassandra)
+| Method | Endpoint | Description | Request Body |
+|--------|----------|-------------|--------------||
+| POST | `/api/financial/[umkm_id]/[tahun]/[bulan]/flag` | Flag suspicious revenue data | `{ flag_reason }` |
+| DELETE | `/api/financial/[umkm_id]/[tahun]/[bulan]/flag` | Remove flag from revenue data | - |
+
+### ✅ Verification Management (PEJABAT - MongoDB + Cassandra)
+| Method | Endpoint | Description | Request Body |
+|--------|----------|-------------|--------------||
+| GET | `/api/verification/pending` | Get pending UMKM verification tasks | - |
+| POST | `/api/verification/[id]/approve` | Approve UMKM profile | - |
+| POST | `/api/verification/[id]/reject` | Reject UMKM profile | `{ rejection_reason }` |
+
+### 🔔 Notifications (UMKM_OWNER - Cassandra)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/notifications` | Get flag notifications for owner's UMKMs |
+| PATCH | `/api/notifications/[id]/read` | Mark notification as read |
+
+### 📊 Dashboard (UMKM_OWNER - MongoDB + Cassandra)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/dashboard/owner` | Get owner's UMKM profiles + financial summary |
