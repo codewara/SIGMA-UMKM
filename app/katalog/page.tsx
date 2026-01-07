@@ -2,6 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { Search, MapPin, DollarSign, Loader } from 'lucide-react';
+import Navigation from '@/components/Navigation';
+import BackgroundElements from '@/components/BackgroundElements';
+import Footer from '@/components/Footer';
+import type { User } from '@/lib/types';
 
 interface UMKM {
     _id: string;
@@ -22,15 +26,44 @@ export default function KatalogPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedSector, setSelectedSector] = useState('semua');
     const [selectedCity, setSelectedCity] = useState('semua');
+    const [user, setUser] = useState<User | null>(null);
+    const [showMobileMenu, setShowMobileMenu] = useState(false);
 
     useEffect(() => {
+        fetchUser();
         fetchUMKMs();
     }, []);
+
+    const fetchUser = async () => {
+        try {
+            const res = await fetch('/api/auth/me');
+            if (res.ok) {
+                const data = await res.json();
+                setUser(data.user);
+            }
+        } catch (error) {
+            console.error('Failed to fetch user:', error);
+        }
+    };
+
+    const handleLogout = async () => {
+        try {
+            await fetch('/api/auth/logout', { 
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            setUser(null);
+            setShowMobileMenu(false);
+            window.location.href = '/';
+        } catch (error) {
+            console.error('Logout failed:', error);
+        }
+    };
 
     const fetchUMKMs = async () => {
         try {
             setLoading(true);
-            const response = await fetch('/api/umkm?status=APPROVED');
+            const response = await fetch('/api/umkm?status=VERIFIED');
             if (response.ok) {
                 const data = await response.json();
                 setUmkms(data.data || []);
@@ -56,12 +89,17 @@ export default function KatalogPage() {
 
     return (
         <div className="min-h-screen bg-[#0f172a] relative overflow-hidden">
-            {/* Background Elements */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-20 left-10 w-72 h-72 bg-purple-500/20 rounded-full blur-3xl animate-pulse"></div>
-                <div className="absolute top-40 right-20 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
-                <div className="absolute bottom-20 left-1/4 w-80 h-80 bg-purple-600/15 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
-            </div>
+            {/* Animated Background Elements */}
+            <BackgroundElements />
+
+            {/* Navigation */}
+            <Navigation
+                user={user}
+                isLoading={false}
+                showMobileMenu={showMobileMenu}
+                onToggleMobileMenu={() => setShowMobileMenu(!showMobileMenu)}
+                onLogout={handleLogout}
+            />
 
             {/* Header */}
             <div className="relative backdrop-blur-xl bg-white/5 border-b border-white/10">
@@ -211,6 +249,9 @@ export default function KatalogPage() {
                     )}
                 </div>
             </div>
+
+            {/* Footer */}
+            <Footer />
         </div>
     );
 }
