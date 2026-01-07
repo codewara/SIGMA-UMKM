@@ -35,7 +35,10 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
             sektor: umkm.sektor,
             wilayah: umkm.wilayah,
             lokasi: umkm.lokasi,
-            summary_terakhir: umkm.summary_terakhir
+            tanggal_bergabung: umkm.tanggal_bergabung,
+            legalitas: {
+                status_verifikasi: umkm.legalitas?.status_verifikasi
+            }
         };
         return NextResponse.json({ message: "UMKM public view", data: restricted });
     }
@@ -44,8 +47,42 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
     if (user.role === "UMKM_OWNER") {
         const isOwner = await requireOwnership(user._id, id);
         if (!isOwner) {
-            return NextResponse.json({ error: "You don't own this UMKM" }, { status: 403 });
+            // Not their UMKM - return public view like unauthenticated users
+            if (umkm.legalitas?.status_verifikasi !== "VERIFIED") {
+                return NextResponse.json({ error: "UMKM not found" }, { status: 404 });
+            }
+            const restricted = {
+                _id: umkm._id,
+                nama_usaha: umkm.nama_usaha,
+                sektor: umkm.sektor,
+                wilayah: umkm.wilayah,
+                lokasi: umkm.lokasi,
+                tanggal_bergabung: umkm.tanggal_bergabung,
+                legalitas: {
+                    status_verifikasi: umkm.legalitas?.status_verifikasi
+                }
+            };
+            return NextResponse.json({ message: "UMKM public view", data: restricted });
         }
+        // They own it - return data like PEJABAT (owner info + revenue, but not legal docs)
+        const ownerView = {
+            _id: umkm._id,
+            nama_usaha: umkm.nama_usaha,
+            sektor: umkm.sektor,
+            wilayah: umkm.wilayah,
+            lokasi: umkm.lokasi,
+            tanggal_bergabung: umkm.tanggal_bergabung,
+            pemilik: umkm.pemilik,
+            jumlah_karyawan: umkm.jumlah_karyawan,
+            tahun_berdiri: umkm.tahun_berdiri,
+            deskripsi: umkm.deskripsi,
+            summary_terakhir: umkm.summary_terakhir,
+            account_status: umkm.account_status,
+            legalitas: {
+                status_verifikasi: umkm.legalitas?.status_verifikasi
+            }
+        };
+        return NextResponse.json({ message: "Your UMKM data", data: ownerView });
     }
 
     // ADMIN, PEJABAT, UMKM_OWNER (own): Full data
