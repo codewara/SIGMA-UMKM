@@ -15,6 +15,7 @@ import type { User, UMKM } from '@/lib/types';
 export default function HomePage() {
   const router = useRouter();
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -94,11 +95,13 @@ export default function HomePage() {
 
   const handleLogout = async () => {
     try {
-      const response = await fetch('/api/auth/logout', { method: 'POST' });
-      if (response.ok) {
-        setUser(null);
-        router.push('/'); // Refresh to clear state
-      }
+      await fetch('/api/auth/logout', { 
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      setUser(null);
+      setShowUserDropdown(false);
+      window.location.href = '/';
     } catch (error) {
       console.error('Logout failed:', error);
     }
@@ -115,7 +118,7 @@ export default function HomePage() {
   const umkmMilikSaya: UMKM[] = [];
 
   return (
-    <div className="min-h-screen bg-blue-950 relative overflow-hidden">
+    <div className="min-h-screen bg-[#0f172a] relative overflow-hidden">
       {/* Animated Background Elements */}
       <BackgroundElements />
 

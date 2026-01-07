@@ -243,39 +243,100 @@ erDiagram
 SIGMA-UMKM/
 ├── app/
 │   ├── api/
+│   │   ├── admin/
+│   │   │   └── users/
+│   │   │       ├── route.ts          # GET/POST /api/admin/users (User Management)
+│   │   │       └── [id]/
+│   │   │           └── route.ts      # DELETE /api/admin/users/[id]
 │   │   ├── auth/
-│   │   │   ├── login/route.ts         # POST /api/auth/login
-│   │   │   ├── register/route.ts      # POST /api/auth/register
-│   │   │   └── verify-email/route.ts  # GET /api/auth/verify-email?token=...
+│   │   │   ├── login/route.ts        # POST /api/auth/login
+│   │   │   ├── logout/route.ts       # POST /api/auth/logout
+│   │   │   ├── me/route.ts           # GET /api/auth/me
+│   │   │   ├── register/route.ts     # POST /api/auth/register
+│   │   │   └── verify-email/route.ts # GET /api/auth/verify-email?token=...
 │   │   ├── umkm/
-│   │   │   └── route.ts               # GET|POST /api/umkm
-│   │   └── test/route.ts              # Database connection test
+│   │   │   ├── route.ts              # GET|POST /api/umkm
+│   │   │   ├── pending/route.ts      # GET /api/umkm/pending (Pejabat)
+│   │   │   ├── locations/route.ts    # GET /api/umkm/locations (Geospatial)
+│   │   │   └── [id]/
+│   │   │       ├── route.ts          # GET|PATCH|DELETE /api/umkm/[id]
+│   │   │       └── verify/route.ts   # PATCH /api/umkm/[id]/verify (Pejabat)
+│   │   ├── analytics/
+│   │   │   └── financial/
+│   │   │       ├── route.ts          # GET|POST /api/analytics/financial
+│   │   │       └── [umkm_id]/
+│   │   │           ├── route.ts      # GET|PATCH|DELETE /api/analytics/financial/[umkm_id]
+│   │   │           └── flag/route.ts # PATCH /api/analytics/financial/[umkm_id]/flag
+│   │   └── test/route.ts             # Database connection test
 │   ├── auth/
-│   │   ├── login/page.tsx             # Login form
-│   │   └── register/page.tsx          # Registration form
-│   ├── admin/
-│   │   └── umkm/page.tsx              # Admin dashboard
+│   │   ├── login/page.tsx            # Login form
+│   │   └── register/page.tsx         # Registration form
+│   ├── dashboard/
+│   │   ├── admin/
+│   │   │   ├── layout.tsx            # Admin dashboard layout
+│   │   │   ├── page.tsx              # Admin overview
+│   │   │   └── users/
+│   │   │       └── page.tsx          # User management (PEJABAT CRUD)
+│   │   ├── pejabat/
+│   │   │   ├── layout.tsx            # Pejabat dashboard layout
+│   │   │   ├── page.tsx              # Pejabat overview
+│   │   │   ├── verifikasi/
+│   │   │   │   └── page.tsx          # UMKM verification queue
+│   │   │   └── umkm/
+│   │   │       └── [id]/
+│   │   │           ├── page.tsx      # UMKM detail + financial logs + flagging
+│   │   │           └── lapor/        # (Future: Financial report entry)
+│   │   └── owner/
+│   │       ├── layout.tsx            # Owner dashboard layout
+│   │       ├── page.tsx              # Owner overview
+│   │       └── umkm/
+│   │           └── [id]/
+│   │               └── lapor/
+│   │                   ├── page.tsx  # Financial report page
+│   │                   └── components/
+│   │                       ├── FinancialForm.tsx
+│   │                       ├── FinancialChart.tsx
+│   │                       └── FinancialTable.tsx
+│   ├── admin/page.tsx                # ⚠️ DEPRECATED: Redirects to /dashboard/admin
+│   ├── components/
+│   │   └── DashboardLayout.tsx       # Shared dashboard layout for all roles
+│   ├── demo/
+│   │   ├── page.tsx                  # Demo mode selection (auto-login for testing)
+│   │   └── actions.ts                # Demo login server action
+│   ├── katalog/page.tsx              # Public UMKM catalog (no login needed)
+│   ├── peta/page.tsx                 # Public geospatial map (no login needed)
 │   ├── umkm/
-│   │   ├── page.tsx                   # UMKM list view
-│   │   └── [id]/page.tsx              # UMKM detail view
-│   ├── layout.tsx                     # Root layout
-│   └── page.tsx                       # Homepage
+│   │   ├── [id]/page.tsx             # UMKM detail view (public + auth variations)
+│   │   └── form-daftar/page.tsx      # UMKM registration form
+│   ├── layout.tsx                    # Root layout
+│   └── page.tsx                      # Homepage (landing page with role-based navigation)
 ├── services/
-│   └── auth.service.ts                # Auth business logic
+│   └── auth.service.ts               # Auth business logic
 ├── lib/
-│   ├── db.ts                          # Database connections
-│   ├── mailer.ts                      # Nodemailer config
-│   ├── types.ts                       # TypeScript types
+│   ├── auth.ts                       # RBAC middleware & session management
+│   ├── db.ts                         # MongoDB & Cassandra connections
+│   ├── mailer.ts                     # Nodemailer config (email verification)
+│   ├── types.ts                      # TypeScript types & interfaces
 │   └── validation/
-│       ├── umkm_profile.schema.ts     # Zod validation for UMKM
-│       └── umkm_financial.schema.ts   # Zod validation for financial
+│       ├── umkm_profile.schema.ts    # Zod validation for UMKM profiles
+│       └── umkm_financial.schema.ts  # Zod validation for financial logs
 ├── db/
-│   ├── schema_umkm.cql                # Cassandra schema
-│   ├── seed_umkm.cql                  # Cassandra seed data
-│   └── seed_mongo.js                  # MongoDB seed data
-├── compose.yml                        # Docker Compose config
-└── .env                               # Environment variables
+│   ├── schema_umkm.cql               # Cassandra keyspace & tables
+│   ├── seed_mongo.js                 # MongoDB seed with 4 test accounts
+│   └── seed_umkm.cql                 # Cassandra seed data
+├── public/                           # Static assets
+├── compose.yml                       # Docker Compose (MongoDB + Cassandra)
+├── middleware.ts                     # Next.js middleware for route protection
+├── .env                              # Environment variables
+└── README.md                         # This file
 ```
+
+### **New Structure Notes:**
+- ✅ **`/dashboard/{admin,pejabat,owner}`**: New role-based dashboard structure
+- ✅ **`/app/admin`**: Old admin page now redirects to `/dashboard/admin`  
+- ✅ **Shared Components**: `DashboardLayout.tsx` for consistent UI across all roles
+- ✅ **Public Routes**: `/katalog`, `/peta`, `/` (no auth required, aggregated data)
+- ✅ **Protected Routes**: `/dashboard/*` (session & role-based access)
 
 ## 🚀 Getting Started
 
@@ -351,6 +412,76 @@ The MongoDB seeder automatically creates these accounts for testing:
 - No login needed - browse [http://localhost:3000](http://localhost:3000) without authentication
 - Public users automatically receive restricted/aggregated data only
 
+### Pre-Seeded Test Accounts (Detailed)
+
+| Email | Password | Role | Status |
+|-------|----------|------|--------|
+| admin@sigma-umkm.com | admin123 | ADMIN | ✅ Active |
+| pejabat@sigma-umkm.com | pejabat123 | PEJABAT | ✅ Active |
+| owner@sigma-umkm.com | owner123 | UMKM_OWNER | ✅ Active |
+
+**Activate User Accounts (Development Only):**
+
+Since email verification is not configured, manually activate accounts using one of these methods:
+
+**Option 1: Via MongoDB Shell (Recommended)**
+```bash
+# Activate ADMIN
+docker exec -it sigma-mongo mongosh -u root -p sigma --authenticationDatabase admin sigma_db --eval "db.users.updateOne({ email: 'admin@sigma-umkm.com' }, { \$set: { account_status: 'active' } })"
+
+# Activate PEJABAT
+docker exec -it sigma-mongo mongosh -u root -p sigma --authenticationDatabase admin sigma_db --eval "db.users.updateOne({ email: 'pejabat@sigma-umkm.com' }, { \$set: { account_status: 'active' } })"
+
+# Activate UMKM_OWNER #1
+docker exec -it sigma-mongo mongosh -u root -p sigma --authenticationDatabase admin sigma_db --eval "db.users.updateOne({ email: 'owner@sigma-umkm.com' }, { \$set: { account_status: 'active' } })"
+
+# Verify all users are active
+docker exec -it sigma-mongo mongosh -u root -p sigma --authenticationDatabase admin sigma_db --eval "db.users.find({ account_status: 'active' }, { email: 1, role: 1, account_status: 1 }).pretty()"
+```
+
+**Option 2: Interactive MongoDB Shell**
+```bash
+# Enter MongoDB shell
+docker exec -it sigma-mongo mongosh -u root -p sigma --authenticationDatabase admin sigma_db
+
+# Then run these commands:
+db.users.updateMany({ role: { $in: ["ADMIN", "PEJABAT", "UMKM_OWNER"] } }, { $set: { account_status: "active" } })
+
+# Verify
+db.users.find().pretty()
+```
+
+**Option 3: Via Node.js Script (if needed)**
+```javascript
+// Create file: activate-users.js
+import { MongoClient, UUID } from 'mongodb';
+
+const MONGO_URI = 'mongodb://root:sigma@localhost:27018?authSource=admin';
+const client = new MongoClient(MONGO_URI);
+
+async function activateUsers() {
+  try {
+    const db = client.db('sigma_db');
+    const users = db.collection('users');
+    
+    const result = await users.updateMany(
+      { role: { $in: ["ADMIN", "PEJABAT", "UMKM_OWNER"] } },
+      { $set: { account_status: "active" } }
+    );
+    
+    console.log(`✅ Updated ${result.modifiedCount} users to active status`);
+    
+    // Verify
+    const active = await users.find({ account_status: "active" }).toArray();
+    console.log("Active users:", active.map(u => ({ email: u.email, role: u.role })));
+  } finally {
+    await client.close();
+  }
+}
+
+activateUsers();
+```
+
 **Creating Additional Users (Optional):**
 Only ADMIN and PEJABAT roles can be registered. Use the registration API:
 
@@ -360,7 +491,7 @@ curl -X POST http://localhost:3000/api/auth/register \
   -d '{"email":"newadmin@test.com","password":"pass123","role":"ADMIN"}'
 ```
 
-**Note:** New accounts require email verification. Since email is not configured in development, you can manually update the `account_status` to `"active"` in MongoDB.
+**Note:** New accounts require email verification. After registering via API, activate using commands above.
 
 **Frontend Pages:**
 - `/` - Homepage with role-based navigation (ADMIN/PEJABAT get action buttons)

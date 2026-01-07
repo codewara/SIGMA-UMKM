@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateUser } from '@/services/auth.service';
+import { connectMongo } from '@/lib/db';
 
 export async function POST(request: NextRequest) {
     try {
@@ -13,7 +14,21 @@ export async function POST(request: NextRequest) {
         const result = await authenticateUser(email, password, ip, userAgent);
 
         if (!result) return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
-        return NextResponse.json({ message: "Login successful", data: result, redirect: "/" }, { status: 200 } );
+        
+        // Get user role to determine redirect
+        const db = await connectMongo();
+        const user = await db.collection('users').findOne({ email });
+        
+        let redirect = '/';
+        if (user?.role === 'ADMIN') {
+            redirect = '/dashboard/admin';
+        } else if (user?.role === 'PEJABAT') {
+            redirect = '/dashboard/pejabat';
+        } else if (user?.role === 'UMKM_OWNER') {
+            redirect = '/dashboard/owner';
+        }
+        
+        return NextResponse.json({ message: "Login successful", data: result, redirect }, { status: 200 } );
     }
     catch (error) {
         if (error instanceof Error && error.message === "TOO_MANY_ATTEMPTS") {

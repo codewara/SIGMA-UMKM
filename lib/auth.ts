@@ -1,6 +1,7 @@
 import { connectMongo } from "@/lib/db";
 import { cookies } from "next/headers";
 import { UUID } from "mongodb";
+import { UserRole } from "./types";
 
 /**
  * RBAC Implementation for SIGMA-UMKM

@@ -1,16 +1,21 @@
 'use client';
 
-import { Menu, LogOut, MapPin, Users, DollarSign, BarChart3, TrendingUp, X, Map as MapIcon } from 'lucide-react';
-import { useState } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function AdminHeatmapPage() {
-  const [showSidebar, setShowSidebar] = useState(false);
-  const [selectedLocation, setSelectedLocation] = useState<any>(null);
-  const pathname = usePathname();
+  const router = useRouter();
 
-  // Simulasi data lokasi
+  useEffect(() => {
+    router.replace('/dashboard/admin/heatmap');
+  }, [router]);
+
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-slate-900">
+      <p className="text-slate-400">Redirecting to Admin Dashboard...</p>
+    </div>
+  );
+
   const locationData = [
     { id: 1, location: 'Jakarta Timur', umkmCount: 45, totalRevenue: 1200, avgRevenue: 26.7, topUmkm: 'Toko Roti Berkah', x: 65, y: 35, intensity: 90 },
     { id: 2, location: 'Bandung', umkmCount: 32, totalRevenue: 890, avgRevenue: 27.8, topUmkm: 'Kerajinan Tangan Indah', x: 45, y: 50, intensity: 65 },

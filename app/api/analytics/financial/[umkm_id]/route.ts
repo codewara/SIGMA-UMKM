@@ -4,12 +4,22 @@ import { umkmFinancialLogSchema } from "@/lib/validation/umkm_financial.schema";
 import { ZodError } from "zod";
 import { requireAuth } from "@/lib/auth";
 import { requireOwnership } from "@/lib/rbac-helpers";
+import { ObjectId } from "mongodb";
 
 // ambil data finansilal umkm by id umkm
 // RBAC: ADMIN, PEJABAT, UMKM_OWNER (own only)
 export async function GET(req: NextRequest, context: { params: Promise<{ umkm_id: string }> }) {
     const { user, error } = await requireAuth(["ADMIN", "PEJABAT", "UMKM_OWNER"]);
-    if (error || !user) return NextResponse.json({ error: error || "Unauthorized" }, { status: 403 });
+    if (error) return NextResponse.json({ error }, { status: 403 });
+
+    // UMKM_OWNER can only access their own data
+    if (user?.role === "UMKM_OWNER") {
+        const mongo = await connectMongo();
+        const umkm = await mongo.collection("umkm").findOne({ _id: new ObjectId(await context.params.then(p => p.umkm_id)) });
+        if (!umkm || umkm.owner_id !== user._id) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+        }
+    }
 
     try {
         const { umkm_id } = await context.params;
@@ -38,26 +48,27 @@ export async function GET(req: NextRequest, context: { params: Promise<{ umkm_id
         `;
 
         const financialLog = await db.execute(query, [umkm_id, tahun]);
-        return NextResponse.json({ message: "Data log finansial UMKM berhasil diambil", financialLog });
+        return NextResponse.json({ message: "Data log finansial UMKM berhasil diambil", data: financialLog.rows });
     } catch (err) {
         return NextResponse.json({ error: "Failed to get UMKM financial data", err }, { status: 500 });
     }
 }
 
 // input data finansial umkm
-// RBAC: ADMIN, PEJABAT, UMKM_OWNER (own only)
+// RBAC: ADMIN & PEJABAT & UMKM_OWNER (own only)
 export async function POST(req: NextRequest, context: { params: Promise<{ umkm_id: string }> }) {
     const { user, error } = await requireAuth(["ADMIN", "PEJABAT", "UMKM_OWNER"]);
-    if (error || !user) return NextResponse.json({ error: error || "Unauthorized" }, { status: 403 });
+    if (error) return NextResponse.json({ error }, { status: 403 });
 
     try {
         const { umkm_id } = await context.params;
 
-        // UMKM_OWNER: Check ownership
-        if (user.role === "UMKM_OWNER") {
-            const isOwner = await requireOwnership(user._id, umkm_id);
-            if (!isOwner) {
-                return NextResponse.json({ error: "You don't own this UMKM" }, { status: 403 });
+        // UMKM_OWNER can only submit for their own UMKM
+        if (user?.role === "UMKM_OWNER") {
+            const mongo = await connectMongo();
+            const umkm = await mongo.collection("umkm").findOne({ _id: new ObjectId(umkm_id) });
+            if (!umkm || umkm.owner_id !== user._id) {
+                return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
             }
         }
 
