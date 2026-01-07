@@ -15,6 +15,10 @@ tests/
 ├── security.test.js       # Security & ownership protection tests
 ├── registration.test.js   # User registration tests
 ├── financial.test.js      # Financial data CRUD tests
+├── query-filters.test.js  # Query parameter & filter tests ✨ NEW
+├── admin-extended.test.js # Extended admin functionality ✨ NEW
+├── pejabat-extended.test.js # Pejabat revenue input tests ✨ NEW
+├── email-verification.test.js # Email verification flow ✨ NEW
 ├── cleanup.test.js        # Test data cleanup
 ├── run-all-tests.js       # Main test runner
 ├── package.json           # Test scripts
@@ -43,6 +47,10 @@ npm run test:owner         # Owner endpoints
 npm run test:security      # Security tests
 npm run test:registration  # Registration tests
 npm run test:financial     # Financial CRUD tests
+npm run test:filters       # Query filters & pagination ✨ NEW
+npm run test:admin-ext     # Extended admin tests ✨ NEW
+npm run test:pejabat-ext   # Pejabat revenue input ✨ NEW
+npm run test:email         # Email verification ✨ NEW
 npm run test:cleanup       # Cleanup test data
 ```
 
@@ -63,16 +71,17 @@ The tests use seeded users from `db/seed_mongo.js`:
 - GET /api/umkm/[id] (detail)
 - GET /api/test (database connection)
 
-### 2. Admin Endpoints
-- Full UMKM CRUD operations
-- Verification management
-- Financial data management (PATCH, DELETE)
+- ✨ Admin profile & logout
+- ✨ Admin notifications
+- ✨ Admin flag operations
 
 ### 3. Pejabat Endpoints
 - Financial data retrieval
 - Flag/unflag financial data
 - Verification workflow
 - Authentication
+- ✨ **Revenue input (critical feature)**
+- ✨ Pejabat notifications
 
 ### 4. UMKM Owner Endpoints
 - Own UMKM management
@@ -90,6 +99,22 @@ The tests use seeded users from `db/seed_mongo.js`:
 - PEJABAT registration
 
 ### 7. Financial Management
+- PATCH financial logs
+- DELETE financial logs
+
+### 8. ✨ Query Filters & Pagination
+- status filter (VERIFIED, PENDING)
+- sektor filter (Kuliner, Jasa, etc.)
+- kota filter (city-based)
+- provinsi filter (province-based)
+- page & limit pagination
+- Tested across all roles
+
+### 9. ✨ Email Verification
+- Valid token activation
+- Account status update
+
+### 10. Financial Management
 - PATCH financial logs
 - DELETE financial logs
 

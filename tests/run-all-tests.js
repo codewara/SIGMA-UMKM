@@ -14,6 +14,10 @@ import { testOwnerEndpoints } from './owner.test.js';
 import { testOwnershipProtection } from './security.test.js';
 import { testRegistration } from './registration.test.js';
 import { testFinancialManagement } from './financial.test.js';
+import { testQueryFilters } from './query-filters.test.js';
+import { testAdminExtended } from './admin-extended.test.js';
+import { testPejabatExtended } from './pejabat-extended.test.js';
+import { testEmailVerification } from './email-verification.test.js';
 import { cleanupTestData } from './cleanup.test.js';
 
 async function runTests() {
@@ -33,6 +37,10 @@ async function runTests() {
         await testOwnershipProtection();
         await testRegistration();
         await testFinancialManagement();
+        await testQueryFilters();
+        await testAdminExtended();
+        await testPejabatExtended();
+        await testEmailVerification();
         await cleanupTestData();
 
         logSection('TEST SUMMARY');

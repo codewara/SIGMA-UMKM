@@ -12,6 +12,10 @@
         "test:security": "node -e \"import('./security.test.js').then(m => m.testOwnershipProtection())\"",
         "test:registration": "node -e \"import('./registration.test.js').then(m => m.testRegistration())\"",
         "test:financial": "node -e \"import('./financial.test.js').then(m => m.testFinancialManagement())\"",
+        "test:filters": "node -e \"import('./query-filters.test.js').then(m => m.testQueryFilters())\"",
+        "test:admin-ext": "node -e \"import('./admin-extended.test.js').then(m => m.testAdminExtended())\"",
+        "test:pejabat-ext": "node -e \"import('./pejabat-extended.test.js').then(m => m.testPejabatExtended())\"",
+        "test:email": "node -e \"import('./email-verification.test.js').then(m => m.testEmailVerification())\"",
         "test:cleanup": "node -e \"import('./cleanup.test.js').then(m => m.cleanupTestData())\""
     },
     "author": "",
