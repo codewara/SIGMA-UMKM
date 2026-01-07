@@ -34,9 +34,9 @@ export async function PATCH(
       { _id: new UUID(params.id) },
       {
         $set: {
-          status: action === 'approve' ? 'VERIFIED' : 'REJECTED',
-          verified_at: new Date(),
-          verified_by: user.email,
+          'legalitas.status_verifikasi': action === 'approve' ? 'VERIFIED' : 'REJECTED',
+          'legalitas.verified_at': new Date(),
+          'legalitas.verified_by': user.email,
         },
       }
     );

@@ -27,15 +27,54 @@ export default function PejabatDashboard() {
     const fetchRegionalStats = async () => {
         try {
             setLoading(true);
-            // TODO: Replace with actual API call
+            // Fetch all data in parallel
+            const [umkmRes, pendingRes, flaggedRes, analyticsRes] = await Promise.all([
+                fetch('/api/umkm?status=VERIFIED'),
+                fetch('/api/umkm/pending'),
+                fetch('/api/analytics/financial'),
+                fetch('/api/analytics/revenue')
+            ]);
+
+            let totalUMKM = 0;
+            let pendingVerification = 0;
+            let flaggedRecords = 0;
+            let totalOmzet = 0;
+
+            if (umkmRes.ok) {
+                const umkmData = await umkmRes.json();
+                totalUMKM = umkmData.data?.length || 0;
+                
+                // Calculate total omzet from UMKM data
+                totalOmzet = umkmData.data?.reduce((sum: number, umkm: any) => {
+                    return sum + (umkm.summary_terakhir?.omzet_terakhir || 0);
+                }, 0) || 0;
+            }
+
+            if (pendingRes.ok) {
+                const pendingData = await pendingRes.json();
+                pendingVerification = pendingData.umkm?.length || 0;
+            }
+
+            if (analyticsRes.ok) {
+                const analyticsData = await analyticsRes.json();
+                // Count flagged records from analytics
+                flaggedRecords = analyticsData.data?.filter((record: any) => record.flag_status === 'FLAGGED').length || 0;
+            }
+
+            setStats({
+                totalUMKM,
+                pendingVerification,
+                flaggedRecords,
+                totalOmzet,
+            });
+        } catch (error) {
+            console.error('Failed to fetch stats:', error);
             setStats({
                 totalUMKM: 0,
                 pendingVerification: 0,
                 flaggedRecords: 0,
                 totalOmzet: 0,
             });
-        } catch (error) {
-            console.error('Failed to fetch stats:', error);
         } finally {
             setLoading(false);
         }
