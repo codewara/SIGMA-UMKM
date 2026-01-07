@@ -269,13 +269,17 @@ docker compose up -d
 
 ### 3. Seed Databases
 
-**MongoDB:**
+**MongoDB (includes UMKM profiles + pre-seeded user accounts):**
 ```bash
 docker cp db/seed_mongo.js sigma-mongo:/seed_mongo.js
 docker exec -it sigma-mongo mongosh -u mongo_username -p mongo_password --authenticationDatabase admin /seed_mongo.js
 ```
 
-**Cassandra:**
+This will create:
+- ✅ 10 UMKM profiles (Kuliner, Fashion, Jasa, Kriya)
+- ✅ 2 pre-configured user accounts (ADMIN & PEJABAT)
+
+**Cassandra (financial time-series data):**
 ```bash
 docker cp db/schema_umkm.cql sigma-cassandra:/schema_umkm.cql
 docker cp db/seed_umkm.cql sigma-cassandra:/seed_umkm.cql
@@ -292,32 +296,38 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000)
 
-### 5. Testing RBAC (Create Test Users)
+### 5. Pre-Seeded Test Accounts
 
-Create users with different roles to test access control:
+The MongoDB seeder automatically creates these accounts for testing:
 
-**Admin User:**
-```bash
-curl -X POST http://localhost:3000/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"email":"admin@test.com","password":"admin123","role":"ADMIN"}'
-```
+| Role | Email | Password | Access Level |
+|------|-------|----------|--------------|
+| **ADMIN** | admin@sigma-umkm.com | admin123 | Full system access |
+| **PEJABAT** | pejabat@sigma-umkm.com | pejabat123 | Revenue input + full dashboard |
 
-**Pejabat User (Government Official):**
-```bash
-curl -X POST http://localhost:3000/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"email":"pejabat@test.com","password":"pejabat123","role":"PEJABAT"}'
-```
-
-Then verify emails (check Cassandra temp_tokens table) and login to test role-based access.
+**Login at:** [http://localhost:3000/auth/login](http://localhost:3000/auth/login)
 
 **Testing Public Access:**
-No registration needed - simply browse the site without logging in to test restricted/aggregated data views.
+- No login needed - browse [http://localhost:3000](http://localhost:3000) without authentication
+- Public users automatically receive restricted/aggregated data only
+
+**Creating Additional Users (Optional):**
+Only ADMIN and PEJABAT roles can be registered. Use the registration API:
+
+```bash
+curl -X POST http://localhost:3000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"newadmin@test.com","password":"pass123","role":"ADMIN"}'
+```
+
+**Note:** New accounts require email verification. Since email is not configured in development, you can manually update the `account_status` to `"active"` in MongoDB.
 
 **Frontend Pages:**
-- `/umkm` - UMKM list (public with limited data, full data when logged in)
-- `/financial/input` - Input monthly revenue (ADMIN & PEJABAT only)
+- `/` - Homepage with role-based navigation (ADMIN/PEJABAT get action buttons)
+- `/auth/login` - Login page (use pre-seeded accounts above)
+- `/admin` - Admin dashboard (ADMIN only)
+- `/admin/revenue` - Revenue input page (PEJABAT primary focus)
+- `/umkm/[id]` - UMKM detail (full data for authenticated, basic for public)
 
 ## 🔐 Authentication Flow
 

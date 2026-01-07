@@ -11,6 +11,8 @@ db = db.getSiblingDB('sigma_db');
 
 // 2. CLEANUP (Hapus data lama biar gak duplikat error)
 db.umkm_profiles.drop();
+db.users.drop();
+db.sessions.drop();
 
 // 3. DEFINE SCHEMA & INSERT DATA
 // MongoDB tidak butuh "CREATE TABLE", langsung insert saja.
@@ -220,4 +222,41 @@ db.umkm_profiles.createIndex({ "lokasi": "2dsphere" });
 // Index untuk filter dashboard agar cepat
 db.umkm_profiles.createIndex({ "sektor": 1, "wilayah.kota": 1 });
 
-print("SEED MONGODB SUCCESS: 10 UMKM Profiles Inserted.");
+print("✅ UMKM Profiles: 10 documents inserted.");
+
+// ============================================================
+// 5. SEED USER ACCOUNTS (ADMIN & PEJABAT)
+// ============================================================
+// Password hashes from generate_password_hashes.js
+
+db.users.insertMany([
+  {
+    "_id": UUID("a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d"),
+    "email": "admin@sigma-umkm.com",
+    "password_hash": "$2b$12$f9KiMzOwK9U9cvreTR/IbuMLLhyJzNUg7Ya2VdlJD5iapqn2kIaP6",
+    "role": "ADMIN",
+    "account_status": "active",
+    "created_at": new Date("2024-01-01T08:00:00Z")
+  },
+  {
+    "_id": UUID("b2c3d4e5-f6a7-5b6c-9d0e-1f2a3b4c5d6e"),
+    "email": "pejabat@sigma-umkm.com",
+    "password_hash": "$2b$12$E6b6L9dQZVdylbEUafhcd.IYbHgHCAg8PBfoLCNy2N8XXJjnuAc06",
+    "role": "PEJABAT",
+    "account_status": "active",
+    "created_at": new Date("2024-01-01T08:00:00Z")
+  }
+]);
+
+// Index untuk email lookup (unique)
+db.users.createIndex({ "email": 1 }, { unique: true });
+
+// Index untuk session cleanup (TTL)
+db.sessions.createIndex({ "expires_at": 1 }, { expireAfterSeconds: 0 });
+
+print("✅ Users: 2 accounts created (ADMIN & PEJABAT).");
+print("📧 Login Credentials:");
+print("   ADMIN    → admin@sigma-umkm.com : admin123");
+print("   PEJABAT  → pejabat@sigma-umkm.com : pejabat123");
+print("");
+print("SEED MONGODB SUCCESS: All data inserted.");
