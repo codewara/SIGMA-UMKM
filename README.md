@@ -517,13 +517,13 @@ sequenceDiagram
 | DELETE | `/api/analytics/financial/[umkm_id]` | Delete financial log entry | `?tahun=2024&bulan=6` | - |
 ### 🚩 Flag Management (PEJABAT - Cassandra)
 | Method | Endpoint | Description | Request Body |
-|--------|----------|-------------|--------------||
+|--------|----------|-------------|--------------|
 | POST | `/api/financial/[umkm_id]/[tahun]/[bulan]/flag` | Flag suspicious revenue data | `{ flag_reason }` |
 | DELETE | `/api/financial/[umkm_id]/[tahun]/[bulan]/flag` | Remove flag from revenue data | - |
 
 ### ✅ Verification Management (PEJABAT - MongoDB + Cassandra)
 | Method | Endpoint | Description | Request Body |
-|--------|----------|-------------|--------------||
+|--------|----------|-------------|--------------|
 | GET | `/api/verification/pending` | Get pending UMKM verification tasks | - |
 | POST | `/api/verification/[id]/approve` | Approve UMKM profile | - |
 | POST | `/api/verification/[id]/reject` | Reject UMKM profile | `{ rejection_reason }` |
