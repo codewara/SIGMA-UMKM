@@ -22,6 +22,7 @@ db.umkm_profiles.insertMany([
   // === KULINER (4 Data) ===
   {
     "_id": UUID("17b3e4b8-62b2-4d97-b0cf-9da1addab974"), // SYNC: Harus sama dengan Cassandra
+    "owner_id": UUID("c3d4e5f6-a7b8-6c7d-0e1f-2a3b4c5d6e7f"), // Owner UMKM (link ke users._id)
     "nama_usaha": "Soto Cak Har",
     "sektor": "Kuliner",
     "tanggal_bergabung": new Date("2023-01-15"),
@@ -43,8 +44,15 @@ db.umkm_profiles.insertMany([
     "legalitas": {
       "nib": "1234567890",
       "pirt": "PIRT-2023-001",
-      "halal": true
+      "halal": true,
+      "dokumen_url": null,
+      "status_verifikasi": "VERIFIED", // Legacy data auto-verified
+      "verified_by": null,
+      "tanggal_verifikasi": new Date("2023-01-15"),
+      "rejection_reason": null
     },
+    "is_deleted": false,
+    "deleted_at": null,
     "summary_terakhir": { // Cache untuk list view
       "omzet_terakhir": 52000000,
       "bulan": 6
@@ -52,6 +60,7 @@ db.umkm_profiles.insertMany([
   },
   {
     "_id": UUID("95ff4e68-c0ba-40aa-a13d-c5bcfaec5f2b"),
+    "owner_id": null,
     "nama_usaha": "Kopi Kenangan Mantan",
     "sektor": "Kuliner",
     "tanggal_bergabung": new Date("2023-03-10"),
@@ -69,11 +78,22 @@ db.umkm_profiles.insertMany([
       "provinsi": "Jawa Timur",
       "alamat_lengkap": "Jl. Tunjungan No. 55"
     },
-    "legalitas": { "nib": "9876543210", "halal": true },
+    "legalitas": {
+      "nib": "9876543210",
+      "halal": true,
+      "dokumen_url": null,
+      "status_verifikasi": "VERIFIED",
+      "verified_by": null,
+      "tanggal_verifikasi": new Date("2023-03-10"),
+      "rejection_reason": null
+    },
+    "is_deleted": false,
+    "deleted_at": null,
     "summary_terakhir": { "omzet_terakhir": 18000000, "bulan": 6 }
   },
   {
     "_id": UUID("1f445d1b-858d-4658-b2db-3425c7fceda8"),
+    "owner_id": null,
     "nama_usaha": "Keripik Buah Batu",
     "sektor": "Kuliner",
     "tanggal_bergabung": new Date("2023-05-20"),
@@ -87,11 +107,22 @@ db.umkm_profiles.insertMany([
       "provinsi": "Jawa Timur",
       "alamat_lengkap": "Jl. Diponegoro Batu"
     },
-    "legalitas": { "pirt": "PIRT-2023-005", "halal": false },
+    "legalitas": {
+      "pirt": "PIRT-2023-005",
+      "halal": false,
+      "dokumen_url": null,
+      "status_verifikasi": "VERIFIED",
+      "verified_by": null,
+      "tanggal_verifikasi": new Date("2023-05-20"),
+      "rejection_reason": null
+    },
+    "is_deleted": false,
+    "deleted_at": null,
     "summary_terakhir": { "omzet_terakhir": 15000000, "bulan": 6 }
   },
   {
     "_id": UUID("86c103ca-afcd-43d9-b735-178a8afe4076"),
+    "owner_id": null,
     "nama_usaha": "Martabak Sultan",
     "sektor": "Kuliner",
     "tanggal_bergabung": new Date("2022-11-11"),
@@ -105,13 +136,24 @@ db.umkm_profiles.insertMany([
       "provinsi": "DKI Jakarta",
       "alamat_lengkap": "Jl. Menteng Raya"
     },
-    "legalitas": { "nib": "1122334455", "halal": true },
+    "legalitas": {
+      "nib": "1122334455",
+      "halal": true,
+      "dokumen_url": null,
+      "status_verifikasi": "VERIFIED",
+      "verified_by": null,
+      "tanggal_verifikasi": new Date("2022-11-11"),
+      "rejection_reason": null
+    },
+    "is_deleted": false,
+    "deleted_at": null,
     "summary_terakhir": { "omzet_terakhir": 61000000, "bulan": 6 }
   },
 
   // === FASHION (3 Data) ===
   {
     "_id": UUID("37fd6395-e5d4-4e78-8920-a911abd96e41"),
+    "owner_id": null,
     "nama_usaha": "Batik Tulis Madura",
     "sektor": "Fashion",
     "tanggal_bergabung": new Date("2021-08-17"),
@@ -124,11 +166,21 @@ db.umkm_profiles.insertMany([
       "kota": "Surabaya",
       "provinsi": "Jawa Timur"
     },
-    "legalitas": { "nib": "5566778899" },
+    "legalitas": {
+      "nib": "5566778899",
+      "dokumen_url": null,
+      "status_verifikasi": "VERIFIED",
+      "verified_by": null,
+      "tanggal_verifikasi": new Date("2021-08-17"),
+      "rejection_reason": null
+    },
+    "is_deleted": false,
+    "deleted_at": null,
     "summary_terakhir": { "omzet_terakhir": 75000000, "bulan": 6 }
   },
   {
     "_id": UUID("da15948b-8dd8-4d77-87ba-e050fda8cff0"),
+    "owner_id": null,
     "nama_usaha": "Distro Jaksel",
     "sektor": "Fashion",
     "tanggal_bergabung": new Date("2023-01-01"),
@@ -141,11 +193,21 @@ db.umkm_profiles.insertMany([
       "kota": "Jakarta",
       "provinsi": "DKI Jakarta"
     },
-    "legalitas": { "nib": "9988776655" },
+    "legalitas": {
+      "nib": "9988776655",
+      "dokumen_url": null,
+      "status_verifikasi": "VERIFIED",
+      "verified_by": null,
+      "tanggal_verifikasi": new Date("2023-01-01"),
+      "rejection_reason": null
+    },
+    "is_deleted": false,
+    "deleted_at": null,
     "summary_terakhir": { "omzet_terakhir": 112000000, "bulan": 6 }
   },
   {
     "_id": UUID("37d4da44-831b-4534-bd4b-bcdadddbfb26"),
+    "owner_id": null,
     "nama_usaha": "Sepatu Cibaduyut",
     "sektor": "Fashion",
     "tanggal_bergabung": new Date("2022-05-05"),
@@ -158,13 +220,23 @@ db.umkm_profiles.insertMany([
       "kota": "Bandung",
       "provinsi": "Jawa Barat"
     },
-    "legalitas": { "nib": "3344556677" },
+    "legalitas": {
+      "nib": "3344556677",
+      "dokumen_url": null,
+      "status_verifikasi": "VERIFIED",
+      "verified_by": null,
+      "tanggal_verifikasi": new Date("2022-05-05"),
+      "rejection_reason": null
+    },
+    "is_deleted": false,
+    "deleted_at": null,
     "summary_terakhir": { "omzet_terakhir": 45000000, "bulan": 6 }
   },
 
   // === JASA (2 Data) ===
   {
     "_id": UUID("e5a01f76-3cb8-41b3-bbf0-529fcd9e278d"),
+    "owner_id": null,
     "nama_usaha": "Laundry Cepat",
     "sektor": "Jasa",
     "tanggal_bergabung": new Date("2024-01-01"),
@@ -177,10 +249,20 @@ db.umkm_profiles.insertMany([
       "kota": "Malang",
       "provinsi": "Jawa Timur"
     },
+    "legalitas": {
+      "dokumen_url": null,
+      "status_verifikasi": "VERIFIED",
+      "verified_by": null,
+      "tanggal_verifikasi": new Date("2024-01-01"),
+      "rejection_reason": null
+    },
+    "is_deleted": false,
+    "deleted_at": null,
     "summary_terakhir": { "omzet_terakhir": 9000000, "bulan": 6 }
   },
   {
     "_id": UUID("89d522e0-3020-425f-8f55-4b6b126b81a2"),
+    "owner_id": null,
     "nama_usaha": "Barbershop Ganteng",
     "sektor": "Jasa",
     "tanggal_bergabung": new Date("2023-12-12"),
@@ -193,12 +275,22 @@ db.umkm_profiles.insertMany([
       "kota": "Surabaya",
       "provinsi": "Jawa Timur"
     },
+    "legalitas": {
+      "dokumen_url": null,
+      "status_verifikasi": "VERIFIED",
+      "verified_by": null,
+      "tanggal_verifikasi": new Date("2023-12-12"),
+      "rejection_reason": null
+    },
+    "is_deleted": false,
+    "deleted_at": null,
     "summary_terakhir": { "omzet_terakhir": 13000000, "bulan": 6 }
   },
 
   // === KRIYA (1 Data) ===
   {
     "_id": UUID("201697a6-6746-4076-8532-59f49ce9f6d2"),
+    "owner_id": null,
     "nama_usaha": "Rotan Indah",
     "sektor": "Kriya",
     "tanggal_bergabung": new Date("2020-02-20"),
@@ -211,6 +303,15 @@ db.umkm_profiles.insertMany([
       "kota": "Malang",
       "provinsi": "Jawa Timur"
     },
+    "legalitas": {
+      "dokumen_url": null,
+      "status_verifikasi": "VERIFIED",
+      "verified_by": null,
+      "tanggal_verifikasi": new Date("2020-02-20"),
+      "rejection_reason": null
+    },
+    "is_deleted": false,
+    "deleted_at": null,
     "summary_terakhir": { "omzet_terakhir": 16000000, "bulan": 6 }
   }
 ]);
@@ -222,10 +323,19 @@ db.umkm_profiles.createIndex({ "lokasi": "2dsphere" });
 // Index untuk filter dashboard agar cepat
 db.umkm_profiles.createIndex({ "sektor": 1, "wilayah.kota": 1 });
 
+// Index untuk owner queries (UMKM_OWNER role)
+db.umkm_profiles.createIndex({ "owner_id": 1 });
+
+// Index untuk verification status (PEJABAT task list)
+db.umkm_profiles.createIndex({ "legalitas.status_verifikasi": 1 });
+
+// Index untuk soft delete filtering
+db.umkm_profiles.createIndex({ "is_deleted": 1 });
+
 print("✅ UMKM Profiles: 10 documents inserted.");
 
 // ============================================================
-// 5. SEED USER ACCOUNTS (ADMIN & PEJABAT)
+// 5. SEED USER ACCOUNTS (ADMIN, PEJABAT, UMKM_OWNER)
 // ============================================================
 // Password hashes from generate_password_hashes.js
 
@@ -249,17 +359,14 @@ db.users.insertMany([
   {
     "_id": UUID("c3d4e5f6-a7b8-6c7d-0e1f-2a3b4c5d6e7f"),
     "email": "owner@sigma-umkm.com",
-    "password_hash": "$2b$12$5d3VtHZKpN2Yq8R9xL1Mm.9K7bJ4cF2sX3wP6mD8nQ1eYaZ0TuCGa",
+    "password_hash": "$2b$12$5IqdV9EpcYk24XH2jqCJd.iexd9vpqJXzSMH/Or0RypUJ3VEidTW6", // owner123
     "role": "UMKM_OWNER",
     "account_status": "active",
-    "created_at": new Date("2024-01-01T08:00:00Z")
-  },
-  {
-    "_id": UUID("d4e5f6a7-b8c9-7d8e-1f2a-3b4c5d6e7f8a"),
-    "email": "owner2@sigma-umkm.com",
-    "password_hash": "$2b$12$9mL2oK1pJ3iH4uG5fE6tD.8C7bX0vW9yZ2aS1rQ0pO9nM8lK7jI6",
-    "role": "UMKM_OWNER",
-    "account_status": "active",
+    "profile": {
+      "nama_lengkap": "Budi Santoso",
+      "nik": "3573012202900002",
+      "telepon": "081234567899"
+    },
     "created_at": new Date("2024-01-01T08:00:00Z")
   }
 ]);
@@ -270,11 +377,10 @@ db.users.createIndex({ "email": 1 }, { unique: true });
 // Index untuk session cleanup (TTL)
 db.sessions.createIndex({ "expires_at": 1 }, { expireAfterSeconds: 0 });
 
-print("✅ Users: 4 accounts created (ADMIN, PEJABAT, UMKM_OWNER x2).");
+print("✅ Users: 3 accounts created (ADMIN, PEJABAT, UMKM_OWNER).");
 print("📧 Login Credentials:");
 print("   ADMIN       → admin@sigma-umkm.com : admin123");
 print("   PEJABAT     → pejabat@sigma-umkm.com : pejabat123");
 print("   UMKM_OWNER  → owner@sigma-umkm.com : owner123");
-print("   UMKM_OWNER  → owner2@sigma-umkm.com : owner123");
 print("");
 print("SEED MONGODB SUCCESS: All data inserted.");

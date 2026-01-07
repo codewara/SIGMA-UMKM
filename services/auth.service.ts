@@ -86,7 +86,12 @@ export async function logoutUser(sessionToken: string) {
 }
 
 // Register User
-export async function registerUser(email: string, pass: string, role: "ADMIN" | "PEJABAT") {
+export async function registerUser(
+    email: string,
+    pass: string,
+    role: "ADMIN" | "PEJABAT" | "UMKM_OWNER",
+    profile?: { nama_lengkap: string; nik: string; telepon: string }
+) {
     const mongo = await connectMongo();
 
     const existingUser = await mongo.collection("users").findOne({ email });
@@ -95,7 +100,7 @@ export async function registerUser(email: string, pass: string, role: "ADMIN" | 
     const userId = uuidv4();
     const hashedPassword = await bcrypt.hash(pass, 12);
 
-    await mongo.collection("users").insertOne({
+    const userData: any = {
         // @ts-expect-error cast _id to UUID
         _id: new UUID(userId),
         email: email,
@@ -104,9 +109,22 @@ export async function registerUser(email: string, pass: string, role: "ADMIN" | 
         account_status: "unverified",
         created_at: new Date(),
         expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
-    });
+    };
+
+    // Add profile for UMKM_OWNER
+    if (role === "UMKM_OWNER" && profile) {
+        userData.profile = profile;
+    }
+
+    await mongo.collection("users").insertOne(userData);
     const token = await generateToken(userId, "email_verification");
-    await sendEmail(email, token);
+
+    try {
+        await sendEmail(email, token);
+    } catch (emailError) {
+        console.warn("Email sending failed (SMTP not configured):", emailError);
+        // Continue - user is created, email can be sent later
+    }
 
     return { userId };
 }

@@ -6,21 +6,29 @@ import { UserRole } from "./types";
 /**
  * RBAC Implementation for SIGMA-UMKM
  * 
- * Four user roles:
- * - PUBLIC: Unauthenticated, view aggregated data
- * - UMKM_OWNER: Can only view/edit their own UMKMs
- * - PEJABAT: Government official, view UMKMs in region, verify & flag
- * - ADMIN: Full access to all system features
+ * Three authenticated user roles:
+ * - ADMIN: Full access (manage UMKM, edit/delete, view all)
+ * - PEJABAT: Government official (approve verification, view full data, flag suspicious data)
+ * - UMKM_OWNER: Business owner (register UMKM, input revenue, manage own business)
  * 
- * Access matrix defined in ENDPOINTS.md
+ * Unauthenticated users (public):
+ * - No login required, receive aggregated/restricted data automatically
+ * 
+ * Access matrix defined in README.md and IMPLEMENTATION_OUTLINE_UMKM_OWNER.md
  */
+
+export type UserRole = "ADMIN" | "PEJABAT" | "UMKM_OWNER";
 
 export interface AuthUser {
     _id: string;
     email: string;
     role: UserRole;
     account_status: string;
-    nama?: string;
+    profile?: {
+        nama_lengkap?: string;
+        nik?: string;
+        telepon?: string;
+    };
 }
 
 // Get current authenticated user from session
@@ -46,9 +54,9 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
         return {
             _id: user._id.toString(),
             email: user.email,
-            role: user.role || "PUBLIC",
+            role: user.role,
             account_status: user.account_status,
-            nama: user.nama
+            profile: user.profile
         };
     } catch (error) {
         console.error("Error getting current user:", error);
