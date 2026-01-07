@@ -60,9 +60,11 @@ export default function HomePage() {
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-      setUser(null);
-      // router.push('/auth/login');
+      const response = await fetch('/api/auth/logout', { method: 'POST' });
+      if (response.ok) {
+        setUser(null);
+        router.push('/'); // Refresh to clear state
+      }
     } catch (error) {
       console.error('Logout failed:', error);
     }
