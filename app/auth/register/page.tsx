@@ -1,173 +1,242 @@
 'use client';
 
-import { Mail, Lock, User, MapPin, Phone, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, User, IdCard, Phone, Eye, EyeOff, Loader, ArrowRight } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import Link from 'next/link';
 
 export default function RegisterPage() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLoading(true);
+    const formData = new FormData(e.currentTarget);
+    const payload = Object.fromEntries(formData.entries());
+
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+      if (!response.ok) alert(`Login failed: ${data.error || 'Unknown error'}`);
+      else router.replace(data.redirect);
+    } catch (error) {
+      console.error('Login error:', error);
+    }
+    finally { setLoading(false); }
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4 py-12">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-[#0f172a] relative overflow-hidden flex items-center justify-center p-4">
+      {/* Animated Background */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-10 w-72 h-72 bg-blue-500/20 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-purple-500/15 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+        <div className="absolute top-1/2 left-1/2 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
+      </div>
+
+      {/* Content */}
+      <div className="w-full max-w-xl relative z-10">
         {/* Logo/Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 bg-blue-600 rounded-lg mb-4">
-            <span className="text-white text-xl font-bold">Σ</span>
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-400 to-purple-500 rounded-2xl mb-4 shadow-lg shadow-blue-500/50">
+            <span className="text-white text-2xl font-black">Σ</span>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">SIGMA UMKM</h1>
-          <p className="text-gray-600 mt-2">Daftar Akun Baru</p>
+          <h1 className="text-4xl font-black text-white mb-2 tracking-tight">SIGMA UMKM</h1>
+          <p className="text-white/70 text-sm">Sistem Monitoring Pendapatan UMKM SDG 8</p>
         </div>
 
         {/* Register Card */}
-        <div className="bg-white rounded-2xl shadow-lg p-8 mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Buat Akun</h2>
+        <div className="bg-white/10 backdrop-blur-2xl rounded-3xl border border-white/20 p-8 shadow-2xl mb-6">
+          <h2 className="text-2xl font-bold text-white mb-2">Buat Akun</h2>
+          <p className="text-white/60 text-sm mb-6">Isi formulir di bawah untuk membuat akun baru</p>
 
-          {/* Nama UMKM */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Nama UMKM
-            </label>
-            <div className="relative">
-              <User className="absolute left-3 top-3.5 text-gray-400 w-5 h-5" />
-              <input
-                type="text"
-                placeholder="Nama bisnis Anda"
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
+          <form onSubmit={handleSubmit}>
+            <div className="grid grid-cols-2 gap-5">
+              {/* Nama Lengkap Input */}
+              <div className="col-span-1">
+                <label className="block text-sm font-semibold text-white/90 mb-2">
+                  Nama Lengkap
+                </label>
+                <div className="relative">
+                  <User className="absolute left-4 top-4 text-white/50 w-5 h-5" />
+                  <input
+                    type="text"
+                    placeholder="Nama Lengkap"
+                    name="fullName"
+                    required
+                    className="w-full pl-12 pr-4 py-3 bg-white/10 border border-white/20 rounded-2xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200"
+                  />
+                </div>
+              </div>
+
+              {/* NIK Input */}
+              <div className="col-span-1">
+                <label className="block text-sm font-semibold text-white/90 mb-2">
+                  NIK
+                </label>
+                <div className="relative">
+                  <IdCard className="absolute left-4 top-4 text-white/50 w-5 h-5" />
+                  <input
+                    type="text"
+                    placeholder="NIK"
+                    name="nik"
+                    required
+                    className="w-full pl-12 pr-4 py-3 bg-white/10 border border-white/20 rounded-2xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200"
+                  />
+                </div>
+              </div>
+
+              {/* Email Input */}
+              <div className="col-span-1">
+                <label className="block text-sm font-semibold text-white/90 mb-2">
+                  Email
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-4 top-4 text-white/50 w-5 h-5" />
+                  <input
+                    type="email"
+                    placeholder="admin@sigma-umkm.com"
+                    name="email"
+                    required
+                    className="w-full pl-12 pr-4 py-3 bg-white/10 border border-white/20 rounded-2xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200"
+                  />
+                </div>
+              </div>
+
+              {/* Phone Input */}
+              <div className="col-span-1">
+                <label className="block text-sm font-semibold text-white/90 mb-2">
+                  Nomor Telepon
+                </label>
+                <div className="relative">
+                  <Phone className="absolute left-4 top-4 text-white/50 w-5 h-5" />
+                  <input
+                    type="tel"
+                    placeholder="081234567890"
+                    name="phone"
+                    required
+                    className="w-full pl-12 pr-4 py-3 bg-white/10 border border-white/20 rounded-2xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200"
+                  />
+                </div>
+              </div>
+
+              {/* Password Input */}
+              <div className="col-span-1 mb-6">
+                <label className="block text-sm font-semibold text-white/90 mb-2">
+                  Password
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-4 text-white/50 w-5 h-5" />
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Masukkan password"
+                    name="password"
+                    required
+                    className="w-full pl-12 pr-12 py-3 bg-white/10 border border-white/20 rounded-2xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-4 text-white/50 hover:text-white/80 transition-colors"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Confirm Password Input */}
+              <div className="col-span-1 mb-6">
+                <label className="block text-sm font-semibold text-white/90 mb-2">
+                  Konfirmasi Password
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-4 text-white/50 w-5 h-5" />
+                  <input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    placeholder="Ulangi password"
+                    name="passwordConfirm"
+                    required
+                    className="w-full pl-12 pr-12 py-3 bg-white/10 border border-white/20 rounded-2xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-4 top-4 text-white/50 hover:text-white/80 transition-colors"
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
 
-          {/* Email */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email
-            </label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-3.5 text-gray-400 w-5 h-5" />
+            {/* Terms */}
+            <div className="flex items-center mb-6">
               <input
-                type="email"
-                placeholder="email@umkm.com"
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                type="checkbox"
+                id="terms"
+                className="w-4 h-4 rounded border-white/30 bg-white/10 text-blue-400 focus:ring-2 focus:ring-blue-400"
               />
+              <label htmlFor="terms" className="ml-2 text-sm text-white/70">
+                Saya setuju dengan{' '}
+                <Link href="#" className="text-blue-400 hover:text-blue-300 font-semibold transition-colors">
+                  Syarat & Ketentuan
+                </Link>
+              </label>
             </div>
-          </div>
 
-          {/* Nomor Telepon */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Nomor Telepon
-            </label>
-            <div className="relative">
-              <Phone className="absolute left-3 top-3.5 text-gray-400 w-5 h-5" />
-              <input
-                type="tel"
-                placeholder="08xx xxxx xxxx"
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-          </div>
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold rounded-2xl hover:from-blue-600 hover:to-purple-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 group"
+            >
+              {loading ? (
+                <>
+                  <Loader className="w-5 h-5 animate-spin" />
+                  Loading...
+                </>
+              ) : (
+                <>
+                  Daftar
+                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </>
+              )}
+            </button>
+          </form>
+        </div>
 
-          {/* Lokasi */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Lokasi/Alamat
-            </label>
-            <div className="relative">
-              <MapPin className="absolute left-3 top-3.5 text-gray-400 w-5 h-5" />
-              <input
-                type="text"
-                placeholder="Kota/Kabupaten"
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-          </div>
-
-          {/* Password */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Password
-            </label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-3.5 text-gray-400 w-5 h-5" />
-              <input
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Minimal 8 karakter"
-                className="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600"
-              >
-                {showPassword ? (
-                  <EyeOff className="w-5 h-5" />
-                ) : (
-                  <Eye className="w-5 h-5" />
-                )}
-              </button>
-            </div>
-          </div>
-
-          {/* Konfirmasi Password */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Konfirmasi Password
-            </label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-3.5 text-gray-400 w-5 h-5" />
-              <input
-                type={showConfirmPassword ? 'text' : 'password'}
-                placeholder="Ulangi password"
-                className="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600"
-              >
-                {showConfirmPassword ? (
-                  <EyeOff className="w-5 h-5" />
-                ) : (
-                  <Eye className="w-5 h-5" />
-                )}
-              </button>
-            </div>
-          </div>
-
-          {/* Terms */}
-          <div className="flex items-start mb-6">
-            <input
-              type="checkbox"
-              className="w-4 h-4 text-blue-600 border-gray-300 rounded mt-0.5"
-            />
-            <span className="ml-2 text-sm text-gray-600">
-              Saya setuju dengan{' '}
-              <a href="#" className="text-blue-600 hover:text-blue-700 font-medium">
-                Syarat & Ketentuan
-              </a>
-            </span>
-          </div>
-
-          {/* Register Button */}
-          <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg transition duration-200 mb-4">
-            Daftar
-          </button>
-
-          {/* Login Link */}
-          <p className="text-center text-gray-600 text-sm">
+        {/* Register Link */}
+        <div className="text-center text-white/60 text-sm">
+          <p>
             Sudah punya akun?{' '}
-            <Link href="/auth/login" className="text-blue-600 hover:text-blue-700 font-semibold">
+            <Link href="/auth/login" className="text-blue-400 hover:text-blue-300 font-semibold transition-colors" replace>
               Masuk di sini
             </Link>
           </p>
         </div>
 
-        {/* Footer */}
-        <p className="text-center text-gray-500 text-xs">
-          © 2026 SIGMA UMKM. Semua hak dilindungi.
-        </p>
+        {/* Back to Home */}
+        <div className="text-center mt-6">
+          <Link href="/" className="inline-flex items-center gap-2 text-white/60 hover:text-white transition-colors text-sm font-medium">
+            ← Kembali ke Beranda
+          </Link>
+        </div>
       </div>
     </div>
   );

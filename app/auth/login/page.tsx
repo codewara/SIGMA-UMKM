@@ -163,7 +163,7 @@ export default function LoginPage() {
         <div className="text-center text-white/60 text-sm">
           <p>
             Belum punya akun?{' '}
-            <Link href="/auth/register" className="text-blue-400 hover:text-blue-300 font-semibold transition-colors">
+            <Link href="/auth/register" className="text-blue-400 hover:text-blue-300 font-semibold transition-colors" replace>
               Daftar di sini
             </Link>
           </p>
