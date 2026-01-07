@@ -67,7 +67,10 @@ export default function UmkmSayaSection({ umkmList }: UmkmSayaSectionProps) {
                     ))}
                 </div>
             ) : (
-                <button className="w-full bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 hover:from-cyan-600 hover:via-purple-600 hover:to-pink-600 text-white px-8 py-6 rounded-3xl font-bold inline-flex items-center justify-center space-x-3 shadow-2xl hover:shadow-pink-500/50 transform hover:scale-105 transition">
+                <button
+                    onClick={() => router.push('/umkm/form-daftar')}
+                    className="w-full bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 hover:from-cyan-600 hover:via-purple-600 hover:to-pink-600 text-white px-8 py-6 rounded-3xl font-bold inline-flex items-center justify-center space-x-3 shadow-2xl hover:shadow-pink-500/50 transform hover:scale-105 transition"
+                >
                     <Plus className="w-6 h-6" />
                     <span>Daftarkan UMKM Saya</span>
                 </button>
