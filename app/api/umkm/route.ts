@@ -13,33 +13,71 @@ export async function GET(req: NextRequest) {
     const db = await connectMongo();
     const umkmCollection = db.collection("umkm_profiles");
 
+    // Extract query parameters
+    const statusParam = req.nextUrl.searchParams.get('status');
+    const sektorParam = req.nextUrl.searchParams.get('sektor');
+    const kotaParam = req.nextUrl.searchParams.get('kota');
+    const provinsiParam = req.nextUrl.searchParams.get('provinsi');
+    const pageParam = req.nextUrl.searchParams.get('page');
+    const limitParam = req.nextUrl.searchParams.get('limit');
+
+    // Pagination setup
+    const page = pageParam ? parseInt(pageParam) : 1;
+    const limit = limitParam ? parseInt(limitParam) : 0; // 0 = no limit
+    const skip = limit > 0 ? (page - 1) * limit : 0;
+
     // Unauthenticated: Only show verified UMKMs (basic info)
     if (!user) {
-        const data = await umkmCollection
-            .find(
-                { "legalitas.status_verifikasi": "VERIFIED", is_deleted: false },
-                { projection: { nama_usaha: 1, sektor: 1, "wilayah.kota": 1 } }
-            )
-            .toArray();
+        const filter: any = { "legalitas.status_verifikasi": "VERIFIED", is_deleted: false };
+
+        // Apply filters
+        if (sektorParam) filter.sektor = sektorParam;
+        if (kotaParam) filter["wilayah.kota"] = kotaParam;
+        if (provinsiParam) filter["wilayah.provinsi"] = provinsiParam;
+
+        let query = umkmCollection.find(filter, {
+            projection: { nama_usaha: 1, sektor: 1, "wilayah.kota": 1, "wilayah.provinsi": 1 }
+        });
+
+        if (skip > 0) query = query.skip(skip);
+        if (limit > 0) query = query.limit(limit);
+
+        const data = await query.toArray();
         return NextResponse.json({ message: "Public UMKM list", data });
     }
 
     // UMKM_OWNER: Only their own UMKMs
     if (user.role === "UMKM_OWNER") {
-        const data = await umkmCollection
-            .find({ owner_id: user._id, is_deleted: false })
-            .toArray();
+        const filter: any = { owner_id: user._id, is_deleted: false };
+
+        // Apply filters
+        if (sektorParam) filter.sektor = sektorParam;
+        if (kotaParam) filter["wilayah.kota"] = kotaParam;
+        if (provinsiParam) filter["wilayah.provinsi"] = provinsiParam;
+
+        let query = umkmCollection.find(filter);
+        if (skip > 0) query = query.skip(skip);
+        if (limit > 0) query = query.limit(limit);
+
+        const data = await query.toArray();
         return NextResponse.json({ message: "Your UMKM list", data });
     }
 
-    // ADMIN & PEJABAT: Full data with optional status filter
-    const statusParam = req.nextUrl.searchParams.get('status');
+    // ADMIN & PEJABAT: Full data with optional filters
     const filter: any = { is_deleted: false };
+
     if (statusParam && ["PENDING", "VERIFIED", "REJECTED"].includes(statusParam)) {
         filter["legalitas.status_verifikasi"] = statusParam;
     }
+    if (sektorParam) filter.sektor = sektorParam;
+    if (kotaParam) filter["wilayah.kota"] = kotaParam;
+    if (provinsiParam) filter["wilayah.provinsi"] = provinsiParam;
 
-    const data = await umkmCollection.find(filter).toArray();
+    let query = umkmCollection.find(filter);
+    if (skip > 0) query = query.skip(skip);
+    if (limit > 0) query = query.limit(limit);
+
+    const data = await query.toArray();
     return NextResponse.json({ message: "UMKM list", data, user: { role: user.role, email: user.email } });
 }
 
