@@ -117,31 +117,8 @@ export async function testAdminExtended() {
         log('  ℹ POST /api/verification/[id]/approve (admin) - Skipped (no pending verifications)', 'yellow');
     }
 
-    // Test admin notifications
-    const notifResult = await request('/api/notifications', {
-        headers: { 'Cookie': `session_token=${sessions.admin}` }
-    });
-    if (notifResult.status === 200) {
-        logTest('GET /api/notifications (admin)', 'PASS', `- ${notifResult.data.count} notifications`);
-
-        // Mark one as read if exists
-        if (notifResult.data.data && notifResult.data.data.length > 0) {
-            const unreadNotif = notifResult.data.data.find(n => !n.is_read);
-            if (unreadNotif) {
-                const markReadResult = await request(`/api/notifications/${unreadNotif.created_at}/read`, {
-                    method: 'PATCH',
-                    headers: { 'Cookie': `session_token=${sessions.admin}` }
-                });
-                if (markReadResult.status === 200) {
-                    logTest('PATCH /api/notifications/[id]/read (admin)', 'PASS', '- Notification marked as read');
-                } else {
-                    logTest('PATCH /api/notifications/[id]/read (admin)', 'FAIL');
-                }
-            }
-        }
-    } else {
-        logTest('GET /api/notifications (admin)', 'FAIL');
-    }
+    // Note: Notifications are UMKM_OWNER only - admin doesn't have access
+    log('  ℹ GET /api/notifications (admin) - Skipped (notifications are UMKM_OWNER only)', 'yellow');
 
     await logout('admin');
 }

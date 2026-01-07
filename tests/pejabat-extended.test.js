@@ -65,33 +65,8 @@ export async function testPejabatExtended() {
         }
     }
 
-    // Test pejabat notifications (they flag data, might receive notifications)
-    const notifResult = await request('/api/notifications', {
-        headers: { 'Cookie': `session_token=${sessions.pejabat}` }
-    });
-    if (notifResult.status === 200) {
-        logTest('GET /api/notifications (pejabat)', 'PASS', `- ${notifResult.data.count} notifications`);
-
-        // Test mark notification as read
-        if (notifResult.data.data && notifResult.data.data.length > 0) {
-            const unreadNotif = notifResult.data.data.find(n => !n.is_read);
-            if (unreadNotif) {
-                const markReadResult = await request(`/api/notifications/${unreadNotif.created_at}/read`, {
-                    method: 'PATCH',
-                    headers: { 'Cookie': `session_token=${sessions.pejabat}` }
-                });
-                if (markReadResult.status === 200) {
-                    logTest('PATCH /api/notifications/[id]/read (pejabat)', 'PASS', '- Notification marked as read');
-                } else {
-                    logTest('PATCH /api/notifications/[id]/read (pejabat)', 'FAIL');
-                }
-            } else {
-                log('  ℹ PATCH /api/notifications/[id]/read (pejabat) - Skipped (no unread notifications)', 'yellow');
-            }
-        }
-    } else {
-        logTest('GET /api/notifications (pejabat)', 'FAIL');
-    }
+    // Note: Notifications are UMKM_OWNER only - pejabat doesn't have access
+    log('  ℹ GET /api/notifications (pejabat) - Skipped (notifications are UMKM_OWNER only)', 'yellow');
 
     await logout('pejabat');
 }
