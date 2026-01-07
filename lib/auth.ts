@@ -5,15 +5,17 @@ import { UUID } from "mongodb";
 /**
  * RBAC Implementation for SIGMA-UMKM
  * 
- * Three user roles:
+ * Two authenticated user roles:
  * - ADMIN: Full access (manage UMKM, edit/delete, view all)
  * - PEJABAT: Government official (input revenue, view full data)
- * - UMUM: Public/unauthenticated (aggregated data only)
+ * 
+ * Unauthenticated users (public):
+ * - No login required, receive aggregated/restricted data automatically
  * 
  * Access matrix defined in README.md
  */
 
-export type UserRole = "ADMIN" | "PEJABAT" | "UMUM";
+export type UserRole = "ADMIN" | "PEJABAT";
 
 export interface AuthUser {
     _id: string;
@@ -45,7 +47,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
         return {
             _id: user._id.toString(),
             email: user.email,
-            role: user.role || "UMUM",
+            role: user.role,
             account_status: user.account_status
         };
     } catch (error) {
@@ -56,20 +58,21 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
 
 // Check if user has required role
 export function hasRole(user: AuthUser | null, allowedRoles: UserRole[]): boolean {
-    if (!user) return allowedRoles.includes("UMUM");
+    if (!user) return false;
     return allowedRoles.includes(user.role);
 }
 
 // Middleware to protect routes
-export async function requireAuth(allowedRoles: UserRole[]): Promise<{ user: AuthUser | null, error: string | null }> {
+// allowPublic: true = allow unauthenticated access (returns user: null)
+export async function requireAuth(allowedRoles: UserRole[], allowPublic = false): Promise<{ user: AuthUser | null, error: string | null }> {
     const user = await getCurrentUser();
 
-    // If UMUM is allowed and no user is logged in, allow
-    if (!user && allowedRoles.includes("UMUM")) {
+    // If public access is allowed and no user, allow (for public endpoints)
+    if (!user && allowPublic) {
         return { user: null, error: null };
     }
 
-    // If no user and UMUM not allowed, deny
+    // If no user and public access not allowed, deny
     if (!user) {
         return { user: null, error: "Authentication required" };
     }

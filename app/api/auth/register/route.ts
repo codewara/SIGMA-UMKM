@@ -6,9 +6,12 @@ export async function POST(request: NextRequest) {
         const { email, password, role } = await request.json();
         if (!email || !password) return NextResponse.json({ error: "Missing fields" }, { status: 400 });
 
-        // Validate role (default to UMKM_OWNER if not provided)
-        const validRoles = ["ADMIN", "PEJABAT", "UMKM_OWNER"];
-        const userRole = role && validRoles.includes(role) ? role : "UMKM_OWNER";
+        // Validate role (ADMIN or PEJABAT only - public users don't need accounts)
+        const validRoles = ["ADMIN", "PEJABAT"];
+        if (!role || !validRoles.includes(role)) {
+            return NextResponse.json({ error: "Invalid role. Must be ADMIN or PEJABAT" }, { status: 400 });
+        }
+        const userRole = role;
 
         // Register User
         const data = await registerUser(email, password, userRole);

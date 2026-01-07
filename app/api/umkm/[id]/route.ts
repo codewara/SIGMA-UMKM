@@ -6,9 +6,9 @@ import { UUID } from "mongodb";
 import { requireAuth } from "@/lib/auth";
 
 // get profile umkm by id
-// RBAC: ADMIN & PEJABAT (full), UMUM (restricted)
+// RBAC: ADMIN & PEJABAT (full data with contact), Unauthenticated (basic info only)
 export async function GET(req: NextRequest, context: { params: Promise<{ id: string }> }) {
-    const { user } = await requireAuth(["ADMIN", "PEJABAT", "UMUM"]);
+    const { user } = await requireAuth(["ADMIN", "PEJABAT"], true);
 
     const { id } = await context.params;
     const db = await connectMongo();
@@ -23,8 +23,8 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
         );
     }
 
-    // UMUM: Restricted view (no contact info)
-    if (!user || user.role === "UMUM") {
+    // Unauthenticated: Restricted view (no contact info)
+    if (!user) {
         const restricted = {
             _id: umkm._id,
             nama_usaha: umkm.nama_usaha,

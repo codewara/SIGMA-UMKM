@@ -54,7 +54,7 @@ erDiagram
         uuid _id PK
         string email UK "Unique index"
         string password_hash "bcrypt hashed"
-        string role "UMKM_OWNER | ADMIN"
+        string role "ADMIN | PEJABAT | UMUM"
         string account_status "unverified | active"
         date created_at
         date expires_at "Account expiry for unverified"
@@ -310,14 +310,10 @@ curl -X POST http://localhost:3000/api/auth/register \
   -d '{"email":"pejabat@test.com","password":"pejabat123","role":"PEJABAT"}'
 ```
 
-**Regular User (Default: UMKM_OWNER):**
-```bash
-curl -X POST http://localhost:3000/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"email":"user@test.com","password":"user123"}'
-```
-
 Then verify emails (check Cassandra temp_tokens table) and login to test role-based access.
+
+**Testing Public Access:**
+No registration needed - simply browse the site without logging in to test restricted/aggregated data views.
 
 **Frontend Pages:**
 - `/umkm` - UMKM list (public with limited data, full data when logged in)
@@ -365,12 +361,14 @@ sequenceDiagram
 |------|-------------|
 | **ADMIN** | Full system access - manage UMKM profiles, edit/delete data, view all details |
 | **PEJABAT** | Government official - **primary role for inputting monthly revenue**, view full dashboard |
-| **UMUM** | Public/unauthenticated - view aggregated dashboard data only (restricted access) |
+| **Unauthenticated (Public)** | No login required - automatically receive aggregated/restricted data only |
+
+**Note:** Only ADMIN and PEJABAT users need accounts. Public visitors can browse without registration.
 
 ### Access Matrix
 
-| Feature / Action | ADMIN | PEJABAT | UMUM | Database |
-|------------------|-------|---------|------|----------|
+| Feature / Action | ADMIN | PEJABAT | Public (No Login) | Database |
+|------------------|-------|---------|-------------------|-----------|
 | **Tambah UMKM Baru** | ✅ YES | ❌ NO | ❌ NO | MongoDB |
 | **Edit Profil UMKM** | ✅ YES | ❌ NO | ❌ NO | MongoDB |
 | **Hapus UMKM** | ✅ YES | ❌ NO | ❌ NO | MongoDB |
@@ -380,8 +378,8 @@ sequenceDiagram
 
 ### API Endpoint Permissions
 
-| Endpoint | ADMIN | PEJABAT | UMUM |
-|----------|-------|---------|------|
+| Endpoint | ADMIN | PEJABAT | Public (No Login) |
+|----------|-------|---------|-------------------|
 | `GET /api/umkm` | Full data | Full data | Basic info only (nama, sektor, kota) |
 | `POST /api/umkm` | ✅ | ❌ | ❌ |
 | `GET /api/umkm/[id]` | Full + contact | Full + contact | Basic only |

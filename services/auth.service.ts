@@ -86,7 +86,7 @@ export async function logoutUser(sessionToken: string) {
 }
 
 // Register User
-export async function registerUser(email: string, pass: string, role: "ADMIN" | "PEJABAT" | "UMKM_OWNER" = "UMKM_OWNER") {
+export async function registerUser(email: string, pass: string, role: "ADMIN" | "PEJABAT") {
     const mongo = await connectMongo();
 
     const existingUser = await mongo.collection("users").findOne({ email });

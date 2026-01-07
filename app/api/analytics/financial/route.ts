@@ -3,14 +3,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
 
 // ambil semua data finansial umkm (untuk dashboard)
-// RBAC: ADMIN & PEJABAT (full), UMUM (aggregated only)
+// RBAC: ADMIN & PEJABAT (full data), Unauthenticated (aggregated only)
 export async function GET(req: NextRequest) {
-    const { user } = await requireAuth(["ADMIN", "PEJABAT", "UMUM"]);
+    const { user } = await requireAuth(["ADMIN", "PEJABAT"], true);
 
     const db = await connectCassandra();
 
-    // UMUM: Return aggregated data only (from dashboard_sector_stats)
-    if (!user || user.role === "UMUM") {
+    // Unauthenticated: Return aggregated data only (from dashboard_sector_stats)
+    if (!user) {
         const sectorStats = await db.execute("SELECT * FROM dashboard_sector_stats LIMIT 100");
         return NextResponse.json({
             message: "Public aggregated dashboard data",

@@ -5,15 +5,15 @@ import { ZodError } from "zod";
 import { requireAuth } from "@/lib/auth";
 
 // ambil list data umkm
-// RBAC: ADMIN, PEJABAT (full), UMUM (restricted - without sensitive data)
+// RBAC: ADMIN, PEJABAT (full data), Unauthenticated (basic info only)
 export async function GET() {
-    const { user, error } = await requireAuth(["ADMIN", "PEJABAT", "UMUM"]);
+    const { user, error } = await requireAuth(["ADMIN", "PEJABAT"], true);
 
     const db = await connectMongo();
     const umkmCollection = db.collection("umkm_profiles");
 
-    // UMUM: Only show basic info
-    if (!user || user.role === "UMUM") {
+    // Unauthenticated: Only show basic info
+    if (!user) {
         const data = await umkmCollection
             .find({}, { projection: { nama_usaha: 1, sektor: 1, "wilayah.kota": 1 } })
             .toArray();
