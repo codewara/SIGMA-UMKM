@@ -22,7 +22,7 @@ db.umkm_profiles.insertMany([
   // === KULINER (4 Data) ===
   {
     "_id": UUID("17b3e4b8-62b2-4d97-b0cf-9da1addab974"), // SYNC: Harus sama dengan Cassandra
-    "owner_id": null, // Legacy data - no owner (ADMIN created)
+    "owner_id": UUID("c3d4e5f6-a7b8-6c7d-0e1f-2a3b4c5d6e7f"), // Owner UMKM (link ke users._id)
     "nama_usaha": "Soto Cak Har",
     "sektor": "Kuliner",
     "tanggal_bergabung": new Date("2023-01-15"),

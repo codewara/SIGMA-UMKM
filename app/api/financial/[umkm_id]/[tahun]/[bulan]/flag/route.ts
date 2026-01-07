@@ -24,7 +24,7 @@ export async function POST(
             umkm_id,
             parseInt(tahun),
             parseInt(bulan),
-            user._id.toString(),
+            user._id,
             parsed.reason
         );
 

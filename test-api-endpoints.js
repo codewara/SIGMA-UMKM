@@ -263,6 +263,19 @@ async function testPejabatEndpoints() {
         logTest('GET /api/auth/me (pejabat)', 'FAIL', `- ${JSON.stringify(meResult.data)}`);
     }
 
+    // Test logout
+    const logoutResult = await request('/api/auth/logout', {
+        method: 'POST',
+        headers: { 'Cookie': `session_token=${sessions.pejabat}` }
+    });
+    if (logoutResult.status === 200) {
+        logTest('POST /api/auth/logout (pejabat)', 'PASS', '- Logged out successfully');
+        // Re-login for remaining tests
+        await login('pejabat');
+    } else {
+        logTest('POST /api/auth/logout (pejabat)', 'FAIL');
+    }
+
     // Test UMKM list with status filter
     const pendingUmkms = await request('/api/umkm?status=PENDING', {
         headers: { 'Cookie': `session_token=${sessions.pejabat}` }
@@ -315,8 +328,39 @@ async function testPejabatEndpoints() {
     });
     if (verificationList.status === 200) {
         logTest('GET /api/verification/pending (pejabat)', 'PASS', `- ${verificationList.data.tasks.length} tasks`);
+
+        // If there are pending tasks, test approve/reject workflow
+        if (verificationList.data.tasks.length > 0) {
+            const pendingTask = verificationList.data.tasks[0];
+
+            // Test approve UMKM
+            const approveResult = await request(`/api/verification/${pendingTask.umkm_id}/approve`, {
+                method: 'POST',
+                headers: { 'Cookie': `session_token=${sessions.pejabat}` }
+            });
+            if (approveResult.status === 200) {
+                logTest('POST /api/verification/[id]/approve (pejabat)', 'PASS', `- Approved: ${pendingTask.nama_usaha}`);
+            } else {
+                logTest('POST /api/verification/[id]/approve (pejabat)', 'FAIL', `- ${JSON.stringify(approveResult.data)}`);
+            }
+        }
+
+        // Note: Testing reject would require creating a new pending UMKM
+        // Skipping to avoid modifying test data
+        log('  ℹ POST /api/verification/[id]/reject - Skipped (would need pending UMKM)', 'yellow');
     } else {
         logTest('GET /api/verification/pending (pejabat)', 'FAIL');
+    }
+
+    // Test get all financial logs (admin/pejabat privilege)
+    const allFinancialResult = await request('/api/analytics/financial', {
+        headers: { 'Cookie': `session_token=${sessions.pejabat}` }
+    });
+    if (allFinancialResult.status === 200) {
+        const totalRecords = allFinancialResult.data.financialLogs?.rows?.length || 0;
+        logTest('GET /api/analytics/financial (pejabat)', 'PASS', `- ${totalRecords} total financial records`);
+    } else {
+        logTest('GET /api/analytics/financial (pejabat)', 'FAIL');
     }
 
     await logout('pejabat');
@@ -430,6 +474,28 @@ async function testOwnerEndpoints() {
     });
     if (notifResult.status === 200) {
         logTest('GET /api/notifications (owner)', 'PASS', `- ${notifResult.data.count} notifications`);
+
+        // If there are unread notifications, test mark as read
+        if (notifResult.data.notifications && notifResult.data.notifications.length > 0) {
+            const unreadNotif = notifResult.data.notifications.find(n => !n.is_read);
+            if (unreadNotif) {
+                // Create notification ID from timestamp (Cassandra clustering key)
+                const notifId = unreadNotif.created_at;
+                const markReadResult = await request(`/api/notifications/${notifId}/read`, {
+                    method: 'PATCH',
+                    headers: { 'Cookie': `session_token=${sessions.owner}` }
+                });
+                if (markReadResult.status === 200) {
+                    logTest('PATCH /api/notifications/[id]/read (owner)', 'PASS', '- Notification marked as read');
+                } else {
+                    logTest('PATCH /api/notifications/[id]/read (owner)', 'FAIL', `- ${JSON.stringify(markReadResult.data)}`);
+                }
+            } else {
+                log('  ℹ PATCH /api/notifications/[id]/read - Skipped (no unread notifications)', 'yellow');
+            }
+        } else {
+            log('  ℹ PATCH /api/notifications/[id]/read - Skipped (no notifications)', 'yellow');
+        }
     } else {
         logTest('GET /api/notifications (owner)', 'FAIL');
     }
@@ -516,8 +582,63 @@ async function testRegistration() {
     }
 }
 
+async function testFinancialManagement() {
+    logSection('7. FINANCIAL DATA MANAGEMENT');
+
+    await login('admin');
+    if (!sessions.admin) return;
+
+    if (testData.umkmId) {
+        // Test PATCH financial log (admin only)
+        const updateFinanceResult = await request(`/api/analytics/financial/${testData.umkmId}?tahun=2024&bulan=6`, {
+            method: 'PATCH',
+            headers: { 'Cookie': `session_token=${sessions.admin}` },
+            body: JSON.stringify({ jumlah_karyawan: 15 })
+        });
+        if (updateFinanceResult.status === 200) {
+            logTest('PATCH /api/analytics/financial/[id] (admin)', 'PASS', '- Updated financial record');
+        } else {
+            logTest('PATCH /api/analytics/financial/[id] (admin)', 'FAIL', `- ${JSON.stringify(updateFinanceResult.data)}`);
+        }
+
+        // Test DELETE financial log (admin only)
+        // Create a test financial entry first
+        const testFinanceData = {
+            tahun: 2025,
+            bulan: 12,
+            omzet: 99999999,
+            jumlah_karyawan: 1,
+            nama_usaha: 'Test Entry',
+            sektor: 'Test'
+        };
+
+        const createTestFinance = await request(`/api/analytics/financial/${testData.umkmId}`, {
+            method: 'POST',
+            headers: { 'Cookie': `session_token=${sessions.admin}` },
+            body: JSON.stringify(testFinanceData)
+        });
+
+        if (createTestFinance.status === 201) {
+            // Now delete it
+            const deleteFinanceResult = await request(`/api/analytics/financial/${testData.umkmId}?tahun=2025&bulan=12`, {
+                method: 'DELETE',
+                headers: { 'Cookie': `session_token=${sessions.admin}` }
+            });
+            if (deleteFinanceResult.status === 200) {
+                logTest('DELETE /api/analytics/financial/[id] (admin)', 'PASS', '- Deleted financial record');
+            } else {
+                logTest('DELETE /api/analytics/financial/[id] (admin)', 'FAIL', `- ${JSON.stringify(deleteFinanceResult.data)}`);
+            }
+        } else {
+            log('  ℹ DELETE /api/analytics/financial/[id] - Skipped (could not create test entry)', 'yellow');
+        }
+    }
+
+    await logout('admin');
+}
+
 async function cleanupTestData() {
-    logSection('7. CLEANUP TEST DATA');
+    logSection('8. CLEANUP TEST DATA');
 
     // Delete created UMKM as admin
     if (testData.createdUmkmId) {
@@ -536,7 +657,7 @@ async function cleanupTestData() {
             });
 
             if (deleteResult.status === 200) {
-                logTest('DELETE /api/umkm/[id] (admin)', 'PASS', '- Test UMKM deleted');
+                logTest('DELETE /api/umkm/[id] (admin)', 'PASS', '- Test UMKM deleted (soft delete)');
             } else {
                 logTest('DELETE /api/umkm/[id] (admin)', 'FAIL', `- ${JSON.stringify(deleteResult.data)}`);
             }
@@ -580,3 +701,4 @@ async function runTests() {
 
 // Run tests
 runTests().catch(console.error);
+testFinancialManagement();

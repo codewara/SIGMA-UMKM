@@ -16,9 +16,12 @@ import { ZodError } from "zod";
  */
 export async function POST(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        // Await params (Next.js 15+)
+        const { id } = await params;
+
         // 1. Check authentication & authorization
         const { user, error } = await requireAuth(["ADMIN", "PEJABAT"]);
 
@@ -41,13 +44,13 @@ export async function POST(
         const validated = rejectionSchema.parse(body);
 
         // 3. Reject UMKM
-        await rejectUMKM(params.id, user._id, validated.reason);
+        await rejectUMKM(id, user._id, validated.reason);
 
         // 4. Return success response
         return NextResponse.json(
             {
                 message: "UMKM verification rejected",
-                umkm_id: params.id,
+                umkm_id: id,
                 rejected_by: user.email,
                 reason: validated.reason
             },

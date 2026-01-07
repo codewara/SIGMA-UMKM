@@ -97,11 +97,14 @@ export async function flagFinancialData(
     umkmId: string,
     tahun: number,
     bulan: number,
-    pejabatId: string,
+    pejabatId: any, // Can be UUID object or string
     reason: string
 ): Promise<void> {
     try {
         const cassandra = await connectCassandra();
+
+        // Convert pejabatId to string if it's a UUID object
+        const pejabatIdStr = typeof pejabatId === 'string' ? pejabatId : pejabatId.toString();
 
         // Update the financial log entry
         const updateQuery = `
@@ -115,7 +118,7 @@ export async function flagFinancialData(
 
         await cassandra.execute(updateQuery, [
             reason,
-            CassandraTypes.Uuid.fromString(pejabatId),
+            CassandraTypes.Uuid.fromString(pejabatIdStr),
             CassandraTypes.Uuid.fromString(umkmId),
             tahun,
             bulan
@@ -133,7 +136,7 @@ export async function flagFinancialData(
 
         const pejabat = await mongo.collection("users").findOne({
             // @ts-expect-error cast to UUID
-            _id: new UUID(pejabatId)
+            _id: new UUID(pejabatIdStr)
         });
 
         if (umkm?.owner_id && pejabat) {
