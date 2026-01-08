@@ -1,8 +1,9 @@
 'use client';
 
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { useEffect } from 'react';
 
 interface UMKM {
     _id: string;
@@ -62,6 +63,36 @@ const createSectorIcon = (sektor: string) => {
     });
 };
 
+// Component to handle bounds fitting
+function BoundsUpdater({ bounds }: { bounds: L.LatLngTuple[] }) {
+    const map = useMap();
+    
+    useEffect(() => {
+        if (bounds.length > 0) {
+            try {
+                // Wait for map to be fully initialized with a small delay
+                const timer = setTimeout(() => {
+                    try {
+                        // Check if map container exists and is ready
+                        if (map && map._container && map._panes && map._panes.mapPane) {
+                            const latLngBounds = L.latLngBounds(bounds);
+                            map.fitBounds(latLngBounds, { padding: [50, 50], maxZoom: 15 });
+                        }
+                    } catch (error) {
+                        console.error('Error fitting bounds:', error);
+                    }
+                }, 300);
+                
+                return () => clearTimeout(timer);
+            } catch (error) {
+                console.error('Error in BoundsUpdater:', error);
+            }
+        }
+    }, [bounds, map]);
+
+    return null;
+}
+
 export default function MapComponent({ umkms }: MapComponentProps) {
     // Default center (Indonesia center)
     const defaultCenter: [number, number] = [-2.5489, 113.9213];
@@ -78,23 +109,32 @@ export default function MapComponent({ umkms }: MapComponentProps) {
         );
     }
 
-    // Auto-calculate bounds from UMKM data
-    const bounds = umkms.map(u => [u.lokasi.coordinates[1], u.lokasi.coordinates[0]]) as L.LatLngTuple[];
+    // Auto-calculate bounds from UMKM data (filter out items without lokasi)
+    const validUmkms = umkms.filter(u => u.lokasi && u.lokasi.coordinates);
+    const bounds = validUmkms.map(u => [u.lokasi.coordinates[1], u.lokasi.coordinates[0]]) as L.LatLngTuple[];
     const center = bounds.length > 0 ? bounds[0] : defaultCenter;
+
+    console.log('MapComponent Debug:', {
+        totalUmkms: umkms.length,
+        validUmkms: validUmkms.length,
+        boundsCount: bounds.length,
+        firstValidUmkm: validUmkms[0]
+    });
 
     return (
         <MapContainer
             center={center}
             zoom={5}
             style={{ height: '100%', width: '100%' }}
-            bounds={bounds}
         >
             <TileLayer
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 attribution='&copy; OpenStreetMap contributors'
             />
 
-            {umkms.map((umkm) => {
+            {bounds.length > 0 && <BoundsUpdater bounds={bounds} />}
+
+            {umkms.filter(u => u.lokasi && u.lokasi.coordinates).map((umkm) => {
                 const [lng, lat] = umkm.lokasi.coordinates;
                 return (
                     <Marker

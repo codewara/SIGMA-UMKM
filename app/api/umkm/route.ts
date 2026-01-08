@@ -65,8 +65,10 @@ export async function GET(req: NextRequest) {
                 "wilayah.kota": 1,
                 "wilayah.provinsi": 1,
                 "wilayah.alamat_lengkap": 1,
+                lokasi: 1,
                 tanggal_bergabung: 1,
-                "legalitas.status_verifikasi": 1
+                "legalitas.status_verifikasi": 1,
+                "summary_terakhir": 1
             }
         });
 

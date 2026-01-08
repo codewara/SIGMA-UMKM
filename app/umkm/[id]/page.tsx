@@ -4,6 +4,10 @@ import { MapPin, Phone, Mail, ArrowLeft, TrendingUp, BarChart3, Edit2, Calendar,
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { formatCurrency } from '@/lib/formatter';
+import BackgroundElements from '@/components/BackgroundElements';
+import dynamic from 'next/dynamic';
+
+const MapPreview = dynamic(() => import('@/app/peta/MapComponent'), { ssr: false });
 
 interface User {
   _id: string;
@@ -16,6 +20,9 @@ interface UMKM {
   nama_usaha: string;
   sektor: string;
   tanggal_bergabung?: string;
+  lokasi?: {
+    coordinates: [number, number];
+  };
   wilayah: {
     kota: string;
     provinsi: string;
@@ -54,10 +61,91 @@ export default function UmkmDetailPage() {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [financialData, setFinancialData] = useState<any[]>([]);
+  const [isLoadingFinancial, setIsLoadingFinancial] = useState(false);
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+  const [availableYears, setAvailableYears] = useState<number[]>([]);
 
   useEffect(() => {
     fetchUserAndUMKM();
   }, [params.id]);
+
+  useEffect(() => {
+    // Fetch financial data when year changes
+    if (params.id) {
+      fetchFinancialData(params.id as string, selectedYear);
+    }
+  }, [selectedYear]);
+
+  const fetchFinancialData = async (umkmId: string, tahun: number) => {
+    try {
+      setIsLoadingFinancial(true);
+      const res = await fetch(`/api/analytics/financial/${umkmId}?tahun=${tahun}`);
+      if (res.ok) {
+        const data = await res.json();
+        console.log('Financial data received:', data.data);
+        
+        // Ensure proper data formatting
+        const formattedData = (data.data || []).map((record: any) => ({
+          umkm_id: record.umkm_id,
+          tahun: record.tahun,
+          bulan: record.bulan,
+          omzet: typeof record.omzet === 'number' ? record.omzet : (record.omzet ? parseInt(record.omzet) : 0),
+          jumlah_karyawan: typeof record.jumlah_karyawan === 'number' ? record.jumlah_karyawan : (record.jumlah_karyawan ? parseInt(record.jumlah_karyawan) : 0),
+          catatan: record.catatan,
+          tanggal_input: record.tanggal_input,
+          is_flagged: record.is_flagged,
+          flag_reason: record.flag_reason
+        }));
+        
+        setFinancialData(formattedData);
+      } else if (res.status === 404) {
+        setFinancialData([]);
+      }
+    } catch (error) {
+      console.error('Failed to fetch financial data:', error);
+    } finally {
+      setIsLoadingFinancial(false);
+    }
+  };
+
+  const fetchAvailableYears = async (umkmId: string) => {
+    try {
+      const res = await fetch(`/api/analytics/financial/${umkmId}`);
+      if (res.ok) {
+        const data = await res.json();
+        const rows = data.data || [];
+        
+        // Extract unique years from all available financial data
+        const yearsSet = new Set<number>();
+        rows.forEach((row: any) => {
+          if (row.tahun) {
+            yearsSet.add(row.tahun);
+          }
+        });
+        
+        // If no years found, default to current and 2 previous years
+        if (yearsSet.size === 0) {
+          const currentYear = new Date().getFullYear();
+          const defaultYears = [currentYear, currentYear - 1, currentYear - 2];
+          setAvailableYears(defaultYears);
+        } else {
+          const sortedYears = Array.from(yearsSet).sort((a, b) => b - a);
+          setAvailableYears(sortedYears);
+          
+          // Set selected year to the most recent year with data
+          if (sortedYears.length > 0 && sortedYears[0] !== selectedYear) {
+            setSelectedYear(sortedYears[0]);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch available years:', error);
+      // Fallback to default years
+      const currentYear = new Date().getFullYear();
+      setAvailableYears([currentYear, currentYear - 1, currentYear - 2]);
+    }
+  };
 
   const fetchUserAndUMKM = async () => {
     try {
@@ -80,6 +168,11 @@ export default function UmkmDetailPage() {
       }
       const umkmData = await umkmRes.json();
       setUmkm(umkmData.data);
+      
+      // Fetch available years from actual financial data
+      if (params.id) {
+        await fetchAvailableYears(params.id as string);
+      }
     } catch (err) {
       console.error('Failed to fetch:', err);
       setError('Gagal memuat data');
@@ -89,18 +182,9 @@ export default function UmkmDetailPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-indigo-900 to-purple-900 relative overflow-hidden">
+    <div className="min-h-screen bg-[#0f172a] relative overflow-hidden">
       {/* Animated Background */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute top-40 right-20 w-80 h-80 bg-purple-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
-        <div className="absolute bottom-20 left-1/3 w-96 h-96 bg-pink-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
-
-        {/* Sparkles */}
-        <div className="absolute top-32 right-1/4 w-2 h-2 bg-cyan-300 rounded-full animate-ping"></div>
-        <div className="absolute top-48 left-1/3 w-1.5 h-1.5 bg-pink-300 rounded-full animate-ping" style={{ animationDelay: '0.5s' }}></div>
-        <div className="absolute bottom-32 right-1/3 w-2 h-2 bg-blue-300 rounded-full animate-ping" style={{ animationDelay: '1s' }}></div>
-      </div>
+      <BackgroundElements />
 
       {/* Header */}
       <div className="sticky top-0 z-50 backdrop-blur-xl bg-white/10 border-b border-white/20 shadow-2xl">
@@ -170,6 +254,24 @@ export default function UmkmDetailPage() {
                 </div>
               ))}
             </div>
+
+            {/* Location Map - Show if lokasi exists */}
+            {umkm.lokasi && umkm.lokasi.coordinates && (
+              <div className="group relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/20 to-blue-500/20 rounded-3xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity"></div>
+                <div className="relative bg-white/10 backdrop-blur-2xl rounded-3xl border border-white/30 p-8 shadow-2xl">
+                  <div className="flex items-center space-x-3 mb-6">
+                    <div className="p-3 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-2xl shadow-lg">
+                      <MapPin className="w-6 h-6 text-white" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-white">Lokasi UMKM</h2>
+                  </div>
+                  <div className="relative h-96 bg-white/5 backdrop-blur-xl border border-white/20 rounded-3xl overflow-hidden">
+                    <MapPreview umkms={[umkm as any]} />
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Info Cards */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -367,6 +469,74 @@ export default function UmkmDetailPage() {
                 </div>
               </div>
             )}
+
+            {/* Financial Data - Public access */}
+            <div className="group relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-green-500/20 to-emerald-500/20 rounded-3xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity"></div>
+              <div className="relative bg-white/10 backdrop-blur-2xl rounded-3xl border border-white/30 overflow-hidden">
+                <div className="p-8 border-b border-white/10 flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-3 bg-gradient-to-br from-green-400 to-emerald-500 rounded-2xl shadow-lg">
+                      <BarChart3 className="w-6 h-6 text-white" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-white">Laporan Keuangan</h2>
+                  </div>
+                  
+                  <select
+                    value={selectedYear}
+                    onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                    className="px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:border-green-400/50 focus:ring-1 focus:ring-green-400/30 transition-all cursor-pointer"
+                  >
+                    {availableYears.map((year) => (
+                      <option key={year} value={year} className="bg-gray-800">
+                        {year}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {isLoadingFinancial ? (
+                  <div className="p-12 text-center">
+                    <p className="text-white/60">Memuat data keuangan...</p>
+                  </div>
+                ) : financialData.length === 0 ? (
+                  <div className="p-12 text-center">
+                    <MapPin className="mx-auto mb-4 text-white/40" size={40} />
+                    <p className="text-white/60">Tidak ada data keuangan untuk tahun {selectedYear}</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-white/10 bg-white/5">
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-cyan-300 uppercase tracking-wider">Periode</th>
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-cyan-300 uppercase tracking-wider">Omzet</th>
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-cyan-300 uppercase tracking-wider">Karyawan</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/10">
+                        {financialData.map((record, idx) => {
+                          const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+                          return (
+                            <tr key={idx} className="hover:bg-white/5 transition-colors">
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <p className="font-semibold text-white">{monthNames[record.bulan - 1]} {record.tahun}</p>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <p className="text-green-300 font-medium">{formatCurrency(record.omzet || 0)}</p>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <p className="text-white">{record.jumlah_karyawan || '-'}</p>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
           </>
         ) : null}
       </div>

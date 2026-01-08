@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { Search, MapPin, DollarSign, Loader } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import BackgroundElements from '@/components/BackgroundElements';
@@ -241,9 +242,12 @@ export default function KatalogPage() {
 
                                     {/* Card Footer */}
                                     <div className="px-6 py-4 bg-white/5 border-t border-white/10">
-                                        <button className="w-full px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all font-medium text-sm">
+                                        <Link
+                                            href={`/umkm/${umkm._id}`}
+                                            className="block w-full px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all font-medium text-sm text-center"
+                                        >
                                             Lihat Detail
-                                        </button>
+                                        </Link>
                                     </div>
                                 </div>
                             ))}

@@ -1,6 +1,7 @@
 'use client';
 
 import { Sparkles, Star } from 'lucide-react';
+import Link from 'next/link';
 
 export default function HeroSection() {
     return (
@@ -28,11 +29,19 @@ export default function HeroSection() {
 
                     {/* CTA Buttons */}
                     <div className="flex flex-wrap gap-4 mb-12">
-                        <button className="group relative px-8 py-4 bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 text-white rounded-full font-bold shadow-2xl hover:shadow-pink-500/50 transition-all overflow-hidden">
+                        <Link href="/auth/register" className="group relative px-8 py-4 bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 text-white rounded-full font-bold shadow-2xl hover:shadow-pink-500/50 transition-all overflow-hidden">
                             <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                             <span className="relative">Daftar Sekarang</span>
-                        </button>
-                        <button className="px-8 py-4 bg-white/10 backdrop-blur-lg border-2 border-white/30 text-white rounded-full font-bold hover:bg-white/20 hover:border-white/50 transition-all">
+                        </Link>
+                        <button 
+                            onClick={() => {
+                                const aboutSection = document.getElementById('about-section');
+                                if (aboutSection) {
+                                    aboutSection.scrollIntoView({ behavior: 'smooth' });
+                                }
+                            }}
+                            className="px-8 py-4 bg-white/10 backdrop-blur-lg border-2 border-white/30 text-white rounded-full font-bold hover:bg-white/20 hover:border-white/50 transition-all cursor-pointer"
+                        >
                             Pelajari Lebih Lanjut
                         </button>
                     </div>
