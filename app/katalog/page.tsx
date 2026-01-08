@@ -5,6 +5,7 @@ import { Search, MapPin, DollarSign, Loader } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import BackgroundElements from '@/components/BackgroundElements';
 import Footer from '@/components/Footer';
+import { formatCurrency } from '@/lib/formatter';
 import type { User } from '@/lib/types';
 
 interface UMKM {
@@ -63,7 +64,8 @@ export default function KatalogPage() {
     const fetchUMKMs = async () => {
         try {
             setLoading(true);
-            const response = await fetch('/api/umkm?status=VERIFIED');
+            // Fetch ALL UMKMs (public access) - tanpa filter status
+            const response = await fetch('/api/umkm');
             if (response.ok) {
                 const data = await response.json();
                 setUmkms(data.data || []);
@@ -230,7 +232,7 @@ export default function KatalogPage() {
                                                 <div className="flex items-center gap-2 text-white/70">
                                                     <DollarSign size={16} className="text-blue-400" />
                                                     <span className="text-sm">
-                                                        Omzet: Rp {(umkm.summary_terakhir.omzet_terakhir / 1000000).toFixed(1)}M
+                                                        Omzet: {formatCurrency(umkm.summary_terakhir.omzet_terakhir)}
                                                     </span>
                                                 </div>
                                             )}

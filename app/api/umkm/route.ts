@@ -26,8 +26,31 @@ export async function GET(req: NextRequest) {
     const limit = limitParam ? parseInt(limitParam) : 0; // 0 = no limit
     const skip = limit > 0 ? (page - 1) * limit : 0;
 
-    // Unauthenticated & UMKM_OWNER: Only show verified UMKMs (basic public info)
-    if (!user || user.role === "UMKM_OWNER") {
+    // UMKM_OWNER: Show only their own UMKMs (all statuses)
+    if (user && user.role === "UMKM_OWNER") {
+        // @ts-expect-error cast user._id string to UUID for comparison
+        const filter: any = { owner_id: new UUID(user._id), is_deleted: false };
+
+        // Apply filters
+        if (sektorParam) filter.sektor = sektorParam;
+        if (kotaParam) filter["wilayah.kota"] = kotaParam;
+        if (provinsiParam) filter["wilayah.provinsi"] = provinsiParam;
+
+        let query = umkmCollection.find(filter);
+
+        if (skip > 0) query = query.skip(skip);
+        if (limit > 0) query = query.limit(limit);
+
+        const data = await query.toArray();
+        return NextResponse.json({ 
+            message: "Owner UMKM list", 
+            data,
+            user: { role: user.role, email: user.email }
+        });
+    }
+
+    // Unauthenticated: Only show verified UMKMs (basic public info)
+    if (!user) {
         const filter: any = { "legalitas.status_verifikasi": "VERIFIED", is_deleted: false };
 
         // Apply filters

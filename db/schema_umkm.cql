@@ -23,11 +23,12 @@ CREATE TABLE umkm_financial_log (
     umkm_id uuid,
     tahun int,
     bulan int,
-    tgl_input timestamp,
+    tanggal_input timestamp,
     omzet decimal,
     jumlah_karyawan int,
-    nama_usaha text, -- Denormalisasi
-    sektor text,     -- Denormalisasi
+    catatan text,             -- Notes from UMKM_OWNER
+    nama_usaha text,          -- Denormalisasi
+    sektor text,              -- Denormalisasi
     
     -- NEW FIELDS FOR FLAGGING --
     is_flagged boolean,       -- True if PEJABAT flags as suspicious

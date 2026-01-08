@@ -8,8 +8,10 @@ interface UMKM {
     _id: string;
     nama_usaha: string;
     sektor: string;
-    verification_status: string;
-    summary_terakhir: {
+    legalitas?: {
+        status_verifikasi?: string;
+    };
+    summary_terakhir?: {
         omzet_terakhir: number;
         bulan: number;
     };
@@ -111,13 +113,13 @@ export default function OwnerDashboard() {
                                         <div className="flex items-center gap-3">
                                             <h3 className="font-semibold text-white">{umkm.nama_usaha}</h3>
                                             <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                                                umkm.verification_status === 'APPROVED' 
+                                                umkm.legalitas?.status_verifikasi === 'VERIFIED' 
                                                     ? 'bg-green-500/30 text-green-300 border border-green-400/50'
-                                                    : umkm.verification_status === 'PENDING'
+                                                    : umkm.legalitas?.status_verifikasi === 'PENDING'
                                                     ? 'bg-yellow-500/30 text-yellow-300 border border-yellow-400/50'
                                                     : 'bg-red-500/30 text-red-300 border border-red-400/50'
                                             }`}>
-                                                {umkm.verification_status}
+                                                {umkm.legalitas?.status_verifikasi || 'UNVERIFIED'}
                                             </span>
                                         </div>
                                         <p className="text-white/60 text-sm mt-1">Sektor: {umkm.sektor}</p>

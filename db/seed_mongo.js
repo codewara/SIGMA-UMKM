@@ -60,7 +60,7 @@ db.umkm_profiles.insertMany([
   },
   {
     "_id": UUID("95ff4e68-c0ba-40aa-a13d-c5bcfaec5f2b"),
-    "owner_id": null,
+    "owner_id": UUID("c3d4e5f6-a7b8-6c7d-0e1f-2a3b4c5d6e7f"), // Tambah owner_id
     "nama_usaha": "Kopi Kenangan Mantan",
     "sektor": "Kuliner",
     "tanggal_bergabung": new Date("2023-03-10"),
@@ -93,7 +93,7 @@ db.umkm_profiles.insertMany([
   },
   {
     "_id": UUID("1f445d1b-858d-4658-b2db-3425c7fceda8"),
-    "owner_id": null,
+    "owner_id": UUID("c3d4e5f6-a7b8-6c7d-0e1f-2a3b4c5d6e7f"), // Tambah owner_id
     "nama_usaha": "Keripik Buah Batu",
     "sektor": "Kuliner",
     "tanggal_bergabung": new Date("2023-05-20"),
@@ -122,7 +122,7 @@ db.umkm_profiles.insertMany([
   },
   {
     "_id": UUID("86c103ca-afcd-43d9-b735-178a8afe4076"),
-    "owner_id": null,
+    "owner_id": UUID("e5f6a7b8-c9d0-8e1f-2a3b-4c5d6e7f8a9b"), // Owner 3
     "nama_usaha": "Martabak Sultan",
     "sektor": "Kuliner",
     "tanggal_bergabung": new Date("2022-11-11"),
@@ -153,7 +153,7 @@ db.umkm_profiles.insertMany([
   // === FASHION (3 Data) ===
   {
     "_id": UUID("37fd6395-e5d4-4e78-8920-a911abd96e41"),
-    "owner_id": null,
+    "owner_id": UUID("d4e5f6a7-b8c9-7d8e-1f2a-3b4c5d6e7f8a"), // Owner 2
     "nama_usaha": "Batik Tulis Madura",
     "sektor": "Fashion",
     "tanggal_bergabung": new Date("2021-08-17"),
@@ -180,7 +180,7 @@ db.umkm_profiles.insertMany([
   },
   {
     "_id": UUID("da15948b-8dd8-4d77-87ba-e050fda8cff0"),
-    "owner_id": null,
+    "owner_id": UUID("d4e5f6a7-b8c9-7d8e-1f2a-3b4c5d6e7f8a"), // Owner 2
     "nama_usaha": "Distro Jaksel",
     "sektor": "Fashion",
     "tanggal_bergabung": new Date("2023-01-01"),
@@ -207,7 +207,7 @@ db.umkm_profiles.insertMany([
   },
   {
     "_id": UUID("37d4da44-831b-4534-bd4b-bcdadddbfb26"),
-    "owner_id": null,
+    "owner_id": UUID("e5f6a7b8-c9d0-8e1f-2a3b-4c5d6e7f8a9b"), // Owner 3
     "nama_usaha": "Sepatu Cibaduyut",
     "sektor": "Fashion",
     "tanggal_bergabung": new Date("2022-05-05"),
@@ -236,7 +236,7 @@ db.umkm_profiles.insertMany([
   // === JASA (2 Data) ===
   {
     "_id": UUID("e5a01f76-3cb8-41b3-bbf0-529fcd9e278d"),
-    "owner_id": null,
+    "owner_id": UUID("e5f6a7b8-c9d0-8e1f-2a3b-4c5d6e7f8a9b"), // Owner 3
     "nama_usaha": "Laundry Cepat",
     "sektor": "Jasa",
     "tanggal_bergabung": new Date("2024-01-01"),
@@ -262,7 +262,7 @@ db.umkm_profiles.insertMany([
   },
   {
     "_id": UUID("89d522e0-3020-425f-8f55-4b6b126b81a2"),
-    "owner_id": null,
+    "owner_id": UUID("e5f6a7b8-c9d0-8e1f-2a3b-4c5d6e7f8a9b"), // Owner 3
     "nama_usaha": "Barbershop Ganteng",
     "sektor": "Jasa",
     "tanggal_bergabung": new Date("2023-12-12"),
@@ -290,7 +290,7 @@ db.umkm_profiles.insertMany([
   // === KRIYA (1 Data) ===
   {
     "_id": UUID("201697a6-6746-4076-8532-59f49ce9f6d2"),
-    "owner_id": null,
+    "owner_id": UUID("e5f6a7b8-c9d0-8e1f-2a3b-4c5d6e7f8a9b"), // Owner 3
     "nama_usaha": "Rotan Indah",
     "sektor": "Kriya",
     "tanggal_bergabung": new Date("2020-02-20"),
@@ -368,6 +368,32 @@ db.users.insertMany([
       "telepon": "081234567899"
     },
     "created_at": new Date("2024-01-01T08:00:00Z")
+  },
+  {
+    "_id": UUID("d4e5f6a7-b8c9-7d8e-1f2a-3b4c5d6e7f8a"),
+    "email": "owner2@sigma-umkm.com",
+    "password_hash": "$2b$12$5IqdV9EpcYk24XH2jqCJd.iexd9vpqJXzSMH/Or0RypUJ3VEidTW6", // owner123
+    "role": "UMKM_OWNER",
+    "account_status": "active",
+    "profile": {
+      "nama_lengkap": "Siti Nurhaliza",
+      "nik": "3578012205950003",
+      "telepon": "082134567890"
+    },
+    "created_at": new Date("2024-01-05T08:00:00Z")
+  },
+  {
+    "_id": UUID("e5f6a7b8-c9d0-8e1f-2a3b-4c5d6e7f8a9b"),
+    "email": "owner3@sigma-umkm.com",
+    "password_hash": "$2b$12$5IqdV9EpcYk24XH2jqCJd.iexd9vpqJXzSMH/Or0RypUJ3VEidTW6", // owner123
+    "role": "UMKM_OWNER",
+    "account_status": "active",
+    "profile": {
+      "nama_lengkap": "Rendra Wijaya",
+      "nik": "3179012208900004",
+      "telepon": "083134567891"
+    },
+    "created_at": new Date("2024-01-10T08:00:00Z")
   }
 ]);
 
@@ -377,10 +403,12 @@ db.users.createIndex({ "email": 1 }, { unique: true });
 // Index untuk session cleanup (TTL)
 db.sessions.createIndex({ "expires_at": 1 }, { expireAfterSeconds: 0 });
 
-print("✅ Users: 3 accounts created (ADMIN, PEJABAT, UMKM_OWNER).");
+print("✅ Users: 4 accounts created (ADMIN, PEJABAT, UMKM_OWNER #1, #2, #3).");
 print("📧 Login Credentials:");
 print("   ADMIN       → admin@sigma-umkm.com : admin123");
 print("   PEJABAT     → pejabat@sigma-umkm.com : pejabat123");
-print("   UMKM_OWNER  → owner@sigma-umkm.com : owner123");
+print("   UMKM_OWNER1 → owner@sigma-umkm.com : owner123");
+print("   UMKM_OWNER2 → owner2@sigma-umkm.com : owner123");
+print("   UMKM_OWNER3 → owner3@sigma-umkm.com : owner123");
 print("");
 print("SEED MONGODB SUCCESS: All data inserted.");

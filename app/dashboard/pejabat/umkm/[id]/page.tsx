@@ -1,27 +1,27 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { AlertCircle, Flag, Loader, ArrowLeft } from 'lucide-react';
+import { useParams } from 'next/navigation';
+import { AlertCircle, Flag, Loader, ArrowLeft, CheckCircle, X } from 'lucide-react';
 import Link from 'next/link';
+import { formatCurrencyFull } from '@/lib/formatter';
 
 interface UMKM {
     _id: string;
     nama_usaha: string;
     sektor: string;
-    verification_status: string;
     pemilik: {
         nama: string;
-        nik: string;
-        telepon: string;
-        email: string;
+        telepon?: string;
+        email?: string;
     };
     wilayah: {
         kota: string;
-        provinsi: string;
-        alamat_lengkap: string;
+        provinsi?: string;
+        alamat_lengkap?: string;
     };
     legalitas: {
+        status_verifikasi?: string;
         nib?: string;
         pirt?: string;
         halal?: boolean;
@@ -32,11 +32,17 @@ interface FinancialLog {
     bulan: number;
     tahun: number;
     omzet: number;
-    pengeluaran: number;
-    laba: number;
+    jumlah_karyawan: number;
+    catatan?: string;
+    tanggal_input?: Date;
     is_flagged: boolean;
     flag_reason?: string;
 }
+
+const MONTH_NAMES = [
+    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+];
 
 export default function DetailUMKMPage() {
     const params = useParams();
@@ -49,11 +55,15 @@ export default function DetailUMKMPage() {
     const [error, setError] = useState<string | null>(null);
     const [flagReason, setFlagReason] = useState('');
     const [showFlagForm, setShowFlagForm] = useState<string | null>(null);
+    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
     useEffect(() => {
         fetchUMKMData();
-        fetchFinancialLogs();
     }, [umkmId]);
+
+    useEffect(() => {
+        fetchFinancialLogs();
+    }, [umkmId, selectedYear]);
 
     const fetchUMKMData = async () => {
         try {
@@ -72,24 +82,32 @@ export default function DetailUMKMPage() {
 
     const fetchFinancialLogs = async () => {
         try {
-            const response = await fetch(`/api/analytics/financial/${umkmId}`);
+            const response = await fetch(`/api/financial-log?umkm_id=${umkmId}&tahun=${selectedYear}`);
             if (response.ok) {
                 const data = await response.json();
-                setLogs(data.data || []);
+                setLogs(data.logs || []);
             }
         } catch (err) {
             console.error('Failed to fetch financial logs:', err);
         }
     };
 
-    const handleFlag = async (logKey: string) => {
+    const handleFlag = async (bulan: number) => {
+        if (!flagReason.trim()) {
+            alert('Masukkan alasan penandaan');
+            return;
+        }
+
+        const logKey = `${selectedYear}-${bulan}`;
         setFlagging(logKey);
         try {
-            const [tahun, bulan] = logKey.split('-');
-            const response = await fetch(`/api/analytics/financial/${umkmId}?tahun=${tahun}&bulan=${bulan}`, {
+            const response = await fetch(`/api/financial-log`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
+                    umkm_id: umkmId,
+                    tahun: selectedYear,
+                    bulan,
                     is_flagged: true,
                     flag_reason: flagReason
                 })
@@ -98,6 +116,51 @@ export default function DetailUMKMPage() {
             if (response.ok) {
                 setShowFlagForm(null);
                 setFlagReason('');
+                await fetchFinancialLogs();
+            } else {
+                setError('Gagal menandai laporan');
+            }
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Gagal menandai laporan');
+        } finally {
+            setFlagging(null);
+        }
+    };
+
+    const handleUnflag = async (bulan: number) => {
+        const logKey = `${selectedYear}-${bulan}`;
+        setFlagging(logKey);
+        try {
+            const response = await fetch(`/api/financial-log`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    umkm_id: umkmId,
+                    tahun: selectedYear,
+                    bulan,
+                    is_flagged: false,
+                    flag_reason: null
+                })
+            });
+
+            if (response.ok) {
+                await fetchFinancialLogs();
+            } else {
+                setError('Gagal menghapus penandaan');
+            }
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Gagal menghapus penandaan');
+        } finally {
+            setFlagging(null);
+        }
+    };
+
+    const formatCurrencyDisplay = (value: number) => {
+        return formatCurrencyFull(value);
+    };
+
+    const currentYear = new Date().getFullYear();
+    const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
                 await fetchFinancialLogs();
             } else {
                 setError('Gagal menandai data');
@@ -112,156 +175,212 @@ export default function DetailUMKMPage() {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center p-12">
-                    <Loader className="animate-spin" size={32} />
+            <div className="min-h-screen bg-[#0f172a] p-6 flex items-center justify-center">
+                <div className="text-center">
+                    <Loader className="animate-spin mx-auto mb-4 text-cyan-400" size={32} />
+                    <p className="text-white/60">Memuat data...</p>
                 </div>
+            </div>
         );
     }
 
     if (!umkm) {
         return (
-            <div className="bg-red-500/20 border border-red-400/30 rounded-3xl p-4 flex items-gap-3">
-                    <AlertCircle className="text-red-400 flex-shrink-0" size={20} />
-                    <p className="text-red-200">UMKM tidak ditemukan</p>
+            <div className="min-h-screen bg-[#0f172a] p-6">
+                <div className="max-w-4xl mx-auto">
+                    <div className="bg-red-500/20 border border-red-400/50 rounded-2xl p-6 flex items-center gap-3">
+                        <AlertCircle className="text-red-400 flex-shrink-0" size={20} />
+                        <p className="text-red-200">UMKM tidak ditemukan</p>
+                    </div>
                 </div>
+            </div>
         );
     }
 
     return (
-        <div className="space-y-6">
-                {/* Header with Back */}
-                <div className="flex items-center gap-4 mb-8">
-                    <Link
-                        href="/dashboard/pejabat/monitoring"
-                        className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-                    >
-                        <ArrowLeft size={24} className="text-white/70" />
-                    </Link>
-                    <div>
-                        <h1 className="text-3xl font-bold text-white">{umkm.nama_usaha}</h1>
-                        <p className="text-white/70">Audit Detail & Financial Log</p>
-                    </div>
+        <div className="min-h-screen bg-[#0f172a] p-4 sm:p-6 lg:p-8">
+            <div className="max-w-6xl mx-auto space-y-6">
+            <div className="max-w-6xl mx-auto space-y-6">
+                {/* Back Button */}
+                <Link href="/dashboard/pejabat/monitoring">
+                    <button className="flex items-center gap-2 text-cyan-400 hover:text-cyan-300 mb-6 transition-colors">
+                        <ArrowLeft size={20} />
+                        <span>Kembali</span>
+                    </button>
+                </Link>
+
+                {/* Header */}
+                <div>
+                    <h1 className="text-4xl font-bold text-white mb-2">{umkm.nama_usaha}</h1>
+                    <p className="text-white/60">Audit Detail & Financial Log Monitoring</p>
                 </div>
 
                 {/* Error Alert */}
                 {error && (
-                    <div className="bg-red-500/20 border border-red-400/30 rounded-3xl p-4 flex items-gap-3">
+                    <div className="bg-red-500/20 border border-red-400/50 rounded-2xl p-6 flex items-center gap-3">
                         <AlertCircle className="text-red-400 flex-shrink-0" size={20} />
                         <p className="text-red-200">{error}</p>
                     </div>
                 )}
 
-                {/* UMKM Profile */}
+                {/* UMKM Profile Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Left Column */}
-                    <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-6">
-                        <h2 className="text-xl font-semibold text-white mb-4">Informasi UMKM</h2>
+                    {/* Profile Info */}
+                    <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl border border-white/10 rounded-2xl p-8">
+                        <h2 className="text-lg font-bold text-white mb-6">👥 Profil UMKM</h2>
                         <div className="space-y-4">
-                            <InfoItem label="Sektor" value={umkm.sektor} />
-                            <InfoItem label="Status Verifikasi" value={
-                                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                                    umkm.verification_status === 'APPROVED'
+                            <div>
+                                <p className="text-white/60 text-sm">Sektor</p>
+                                <p className="text-white font-semibold">{umkm.sektor}</p>
+                            </div>
+                            <div>
+                                <p className="text-white/60 text-sm">Status Verifikasi</p>
+                                <p className={`text-sm font-semibold px-3 py-1 rounded-full inline-block ${
+                                    umkm.legalitas?.status_verifikasi === 'VERIFIED'
                                         ? 'bg-green-500/30 text-green-300'
-                                        : umkm.verification_status === 'PENDING'
+                                        : umkm.legalitas?.status_verifikasi === 'PENDING'
                                         ? 'bg-yellow-500/30 text-yellow-300'
                                         : 'bg-red-500/30 text-red-300'
                                 }`}>
-                                    {umkm.verification_status}
-                                </span>
-                            } />
+                                    {umkm.legalitas?.status_verifikasi || 'UNKNOWN'}
+                                </p>
+                            </div>
                         </div>
                     </div>
 
-                    {/* Right Column */}
-                    <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-6">
-                        <h2 className="text-xl font-semibold text-white mb-4">Informasi Pemilik</h2>
+                    {/* Pemilik Info */}
+                    <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl border border-white/10 rounded-2xl p-8">
+                        <h2 className="text-lg font-bold text-white mb-6">👤 Informasi Pemilik</h2>
                         <div className="space-y-4">
-                            <InfoItem label="Nama" value={umkm.pemilik.nama} />
-                            <InfoItem label="NIK" value={umkm.pemilik.nik} />
-                            <InfoItem label="Telepon" value={umkm.pemilik.telepon} />
-                            <InfoItem label="Email" value={umkm.pemilik.email} />
-                        </div>
-                    </div>
-                </div>
-
-                {/* Wilayah & Legalitas */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-6">
-                        <h2 className="text-xl font-semibold text-white mb-4">Lokasi</h2>
-                        <div className="space-y-4">
-                            <InfoItem label="Kota" value={umkm.wilayah.kota} />
-                            <InfoItem label="Provinsi" value={umkm.wilayah.provinsi} />
-                            <InfoItem label="Alamat Lengkap" value={umkm.wilayah.alamat_lengkap} />
+                            <div>
+                                <p className="text-white/60 text-sm">Nama</p>
+                                <p className="text-white font-semibold">{umkm.pemilik?.nama || '-'}</p>
+                            </div>
+                            <div>
+                                <p className="text-white/60 text-sm">Telepon</p>
+                                <p className="text-white">{umkm.pemilik?.telepon || '-'}</p>
+                            </div>
+                            <div>
+                                <p className="text-white/60 text-sm">Email</p>
+                                <p className="text-white break-all">{umkm.pemilik?.email || '-'}</p>
+                            </div>
                         </div>
                     </div>
 
-                    <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-6">
-                        <h2 className="text-xl font-semibold text-white mb-4">Legalitas</h2>
+                    {/* Wilayah */}
+                    <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl border border-white/10 rounded-2xl p-8">
+                        <h2 className="text-lg font-bold text-white mb-6">📍 Lokasi</h2>
                         <div className="space-y-4">
-                            <InfoItem label="NIB" value={umkm.legalitas.nib || '-'} />
-                            <InfoItem label="PIRT" value={umkm.legalitas.pirt || '-'} />
-                            <InfoItem label="Halal" value={umkm.legalitas.halal ? 'Ya' : 'Tidak'} />
+                            <div>
+                                <p className="text-white/60 text-sm">Kota</p>
+                                <p className="text-white font-semibold">{umkm.wilayah?.kota || '-'}</p>
+                            </div>
+                            <div>
+                                <p className="text-white/60 text-sm">Provinsi</p>
+                                <p className="text-white">{umkm.wilayah?.provinsi || '-'}</p>
+                            </div>
+                            <div>
+                                <p className="text-white/60 text-sm">Alamat Lengkap</p>
+                                <p className="text-white text-sm">{umkm.wilayah?.alamat_lengkap || '-'}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Legalitas */}
+                    <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl border border-white/10 rounded-2xl p-8">
+                        <h2 className="text-lg font-bold text-white mb-6">📋 Legalitas</h2>
+                        <div className="space-y-4">
+                            <div>
+                                <p className="text-white/60 text-sm">NIB</p>
+                                <p className="text-white">{umkm.legalitas?.nib || '-'}</p>
+                            </div>
+                            <div>
+                                <p className="text-white/60 text-sm">PIRT</p>
+                                <p className="text-white">{umkm.legalitas?.pirt || '-'}</p>
+                            </div>
+                            <div>
+                                <p className="text-white/60 text-sm">Halal</p>
+                                <p className="text-white">{umkm.legalitas?.halal ? '✓ Ya' : '✗ Tidak'}</p>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 {/* Financial Audit Log */}
-                <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl overflow-hidden">
-                    <div className="p-6 border-b border-white/20">
-                        <h2 className="text-xl font-semibold text-white">Audit Log Keuangan</h2>
+                <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden">
+                    <div className="p-8 border-b border-white/10 flex items-center justify-between">
+                        <h2 className="text-2xl font-bold text-white">💰 Audit Log Keuangan</h2>
+                        <select
+                            value={selectedYear}
+                            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                            className="px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:border-cyan-400/50 focus:ring-1 focus:ring-cyan-400/30 transition-all cursor-pointer"
+                        >
+                            {years.map(year => (
+                                <option key={year} value={year} className="bg-slate-900">{year}</option>
+                            ))}
+                        </select>
                     </div>
                     
                     {logs.length === 0 ? (
-                        <p className="text-white/60 text-center py-8">Tidak ada data keuangan</p>
+                        <div className="p-12 text-center">
+                            <AlertCircle className="mx-auto mb-4 text-white/40" size={40} />
+                            <p className="text-white/60">Tidak ada data keuangan untuk tahun {selectedYear}</p>
+                        </div>
                     ) : (
                         <div className="overflow-x-auto">
-                            <table className="w-full text-white/90">
+                            <table className="w-full">
                                 <thead>
                                     <tr className="border-b border-white/10 bg-white/5">
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-white/70">Periode</th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-white/70">Omzet</th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-white/70">Pengeluaran</th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-white/70">Laba</th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-white/70">Status</th>
-                                        <th className="px-4 py-3 text-center text-xs font-medium text-white/70">Aksi</th>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-cyan-300 uppercase tracking-wider">Periode</th>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-cyan-300 uppercase tracking-wider">Omzet</th>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-cyan-300 uppercase tracking-wider">Karyawan</th>
+                                        <th className="px-6 py-4 text-left text-xs font-semibold text-cyan-300 uppercase tracking-wider">Status</th>
+                                        <th className="px-6 py-4 text-center text-xs font-semibold text-cyan-300 uppercase tracking-wider">Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-white/10">
-                                    {logs.map((log, idx) => {
-                                        const logKey = `${log.tahun}-${String(log.bulan).padStart(2, '0')}`;
+                                    {logs.map((log) => {
+                                        const logKey = `${selectedYear}-${String(log.bulan).padStart(2, '0')}`;
                                         return (
-                                            <tr key={idx} className="hover:bg-white/5 transition-colors">
-                                                <td className="px-4 py-3 whitespace-nowrap">
-                                                    {log.bulan}/{log.tahun}
+                                            <tr key={logKey} className="hover:bg-white/5 transition-colors">
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <p className="font-semibold text-white">{MONTH_NAMES[log.bulan - 1]} {log.tahun}</p>
                                                 </td>
-                                                <td className="px-4 py-3">
-                                                    Rp {log.omzet.toLocaleString('id-ID')}
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <p className="text-cyan-300 font-medium">{formatCurrencyDisplay(log.omzet)}</p>
                                                 </td>
-                                                <td className="px-4 py-3">
-                                                    Rp {log.pengeluaran.toLocaleString('id-ID')}
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <p className="text-white/80">{log.jumlah_karyawan} Orang</p>
                                                 </td>
-                                                <td className="px-4 py-3">
-                                                    Rp {log.laba.toLocaleString('id-ID')}
-                                                </td>
-                                                <td className="px-4 py-3">
+                                                <td className="px-6 py-4 whitespace-nowrap">
                                                     {log.is_flagged ? (
-                                                        <span className="px-2 py-1 bg-red-500/30 text-red-300 rounded text-xs font-medium">
+                                                        <span className="px-3 py-1 bg-red-500/30 text-red-300 rounded-full text-xs font-semibold">
                                                             🚩 Flagged
                                                         </span>
                                                     ) : (
-                                                        <span className="px-2 py-1 bg-green-500/30 text-green-300 rounded text-xs font-medium">
+                                                        <span className="px-3 py-1 bg-green-500/30 text-green-300 rounded-full text-xs font-semibold">
                                                             Normal
                                                         </span>
                                                     )}
                                                 </td>
-                                                <td className="px-4 py-3 text-center">
-                                                    {!log.is_flagged && (
+                                                <td className="px-6 py-4 text-center">
+                                                    {!log.is_flagged ? (
                                                         <button
-                                                            onClick={() => setShowFlagForm(showFlagForm === logKey ? null : logKey)}
-                                                            className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
-                                                            title="Tandai sebagai mencurigakan"
+                                                            onClick={() => setShowFlagForm(logKey)}
+                                                            disabled={flagging === logKey}
+                                                            className="text-pink-300 hover:text-pink-200 disabled:opacity-50 transition-colors flex items-center justify-center gap-2 hover:bg-pink-500/20 px-3 py-1 rounded-lg"
                                                         >
-                                                            <Flag size={18} />
+                                                            {flagging === logKey ? <Loader size={16} className="animate-spin" /> : <Flag size={16} />}
+                                                            <span className="text-sm">Flag</span>
+                                                        </button>
+                                                    ) : (
+                                                        <button
+                                                            onClick={() => handleUnflag(log.bulan)}
+                                                            disabled={flagging === logKey}
+                                                            className="text-emerald-300 hover:text-emerald-200 disabled:opacity-50 transition-colors flex items-center justify-center gap-2 hover:bg-emerald-500/20 px-3 py-1 rounded-lg"
+                                                        >
+                                                            {flagging === logKey ? <Loader size={16} className="animate-spin" /> : <CheckCircle size={16} />}
+                                                            <span className="text-sm">Unflag</span>
                                                         </button>
                                                     )}
                                                 </td>
@@ -272,53 +391,46 @@ export default function DetailUMKMPage() {
                             </table>
                         </div>
                     )}
+                </div>
 
-                    {/* Flag Form */}
-                    {showFlagForm && (
-                        <div className="p-6 border-t border-white/10 bg-white/5">
-                            <h3 className="font-semibold text-white mb-3">
-                                Tandai Data Sebagai Mencurigakan
-                            </h3>
-                            <div>
-                                <label className="block text-sm font-medium text-white/70 mb-2">
-                                    Alasan Penandaan
-                                </label>
-                                <textarea
-                                    value={flagReason}
-                                    onChange={(e) => setFlagReason(e.target.value)}
-                                    placeholder="Jelaskan alasan data ini mencurigakan..."
-                                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-2xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-red-400"
-                                    rows={3}
-                                />
-                            </div>
-                            <div className="flex gap-3 mt-4">
+                {/* Flag Form Modal */}
+                {showFlagForm && (
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                        <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 rounded-2xl p-8 max-w-md w-full">
+                            <h3 className="text-xl font-bold text-white mb-4">🚩 Tandai Laporan</h3>
+                            <textarea
+                                value={flagReason}
+                                onChange={(e) => setFlagReason(e.target.value)}
+                                placeholder="Masukkan alasan penandaan..."
+                                rows={4}
+                                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-pink-400/50 focus:ring-1 focus:ring-pink-400/30 transition-all resize-none mb-4"
+                            />
+                            <div className="flex gap-3">
                                 <button
-                                    onClick={() => setShowFlagForm(null)}
-                                    className="px-4 py-2 bg-white/10 border border-white/20 rounded-2xl text-white/70 hover:text-white hover:bg-white/20"
+                                    onClick={() => {
+                                        setShowFlagForm(null);
+                                        setFlagReason('');
+                                    }}
+                                    className="flex-1 px-4 py-2 border border-white/20 rounded-xl text-white hover:bg-white/10 transition-colors"
                                 >
                                     Batal
                                 </button>
                                 <button
-                                    onClick={() => handleFlag(showFlagForm)}
-                                    disabled={flagging === showFlagForm}
-                                    className="px-4 py-2 bg-red-500 text-white rounded-2xl hover:bg-red-600 disabled:opacity-50 flex items-center gap-2"
+                                    onClick={() => {
+                                        const bulan = parseInt(showFlagForm.split('-')[1]);
+                                        handleFlag(bulan);
+                                    }}
+                                    disabled={flagging !== null}
+                                    className="flex-1 px-4 py-2 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 disabled:opacity-50 text-white rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
                                 >
-                                    {flagging === showFlagForm && <Loader size={16} className="animate-spin" />}
+                                    {flagging ? <Loader size={16} className="animate-spin" /> : <Flag size={16} />}
                                     Tandai
                                 </button>
                             </div>
                         </div>
-                    )}
-                </div>
+                    </div>
+                )}
             </div>
-    );
-}
-
-function InfoItem({ label, value }: { label: string; value: React.ReactNode }) {
-    return (
-        <div>
-            <p className="text-sm font-medium text-white/70">{label}</p>
-            <p className="text-white mt-1">{value}</p>
         </div>
     );
 }

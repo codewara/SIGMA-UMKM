@@ -61,7 +61,8 @@ export default function PetaPage() {
     const fetchUMKMs = async () => {
         try {
             setLoading(true);
-            const response = await fetch('/api/umkm?status=VERIFIED');
+            // Fetch ALL UMKMs (public access) - tanpa filter status
+            const response = await fetch('/api/umkm');
             if (response.ok) {
                 const data = await response.json();
                 setUmkms(data.data || []);

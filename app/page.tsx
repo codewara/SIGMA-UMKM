@@ -10,6 +10,7 @@ import UmkmSayaSection from '@/components/UmkmSayaSection';
 import SearchBar from '@/components/SearchBar';
 import UmkmGrid from '@/components/UmkmGrid';
 import Footer from '@/components/Footer';
+import { formatCurrency } from '@/lib/formatter';
 import type { User, UMKM } from '@/lib/types';
 
 export default function HomePage() {

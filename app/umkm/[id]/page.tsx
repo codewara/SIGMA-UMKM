@@ -3,6 +3,7 @@
 import { MapPin, Phone, Mail, ArrowLeft, TrendingUp, BarChart3, Edit2, Calendar, Users, Award, DollarSign, Activity } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { formatCurrency } from '@/lib/formatter';
 
 interface User {
   _id: string;
@@ -152,7 +153,7 @@ export default function UmkmDetailPage() {
                 { label: 'Sektor', value: umkm.sektor, icon: Award, color: 'from-blue-400 to-cyan-500', bg: 'from-blue-500/20 to-cyan-500/20', show: true },
                 { label: 'Bergabung', value: umkm.tanggal_bergabung ? new Date(umkm.tanggal_bergabung).toLocaleDateString('id-ID', { year: 'numeric', month: 'short' }) : 'N/A', icon: Calendar, color: 'from-purple-400 to-pink-500', bg: 'from-purple-500/20 to-pink-500/20', show: true },
                 { label: 'Karyawan', value: umkm.jumlah_karyawan || 'N/A', icon: Users, color: 'from-orange-400 to-red-500', bg: 'from-orange-500/20 to-red-500/20', show: umkm.jumlah_karyawan !== undefined },
-                { label: 'Omzet Terakhir', value: umkm.summary_terakhir?.omzet_terakhir ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(umkm.summary_terakhir.omzet_terakhir) : 'N/A', icon: DollarSign, color: 'from-cyan-400 to-blue-500', bg: 'from-cyan-500/20 to-blue-500/20', show: umkm.summary_terakhir?.omzet_terakhir !== undefined },
+                { label: 'Omzet Terakhir', value: umkm.summary_terakhir?.omzet_terakhir ? formatCurrency(umkm.summary_terakhir.omzet_terakhir) : 'N/A', icon: DollarSign, color: 'from-cyan-400 to-blue-500', bg: 'from-cyan-500/20 to-blue-500/20', show: umkm.summary_terakhir?.omzet_terakhir !== undefined },
                 { label: 'Status Verifikasi', value: umkm.legalitas?.status_verifikasi || 'N/A', icon: Award, color: 'from-pink-400 to-rose-500', bg: 'from-pink-500/20 to-rose-500/20', show: user?.role === 'ADMIN' },
               ].filter(stat => stat.show).map((stat, idx) => (
                 <div key={idx} className="group relative">

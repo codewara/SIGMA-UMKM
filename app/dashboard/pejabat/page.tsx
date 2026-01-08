@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { BarChart3, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 import Link from 'next/link';
+import { formatCurrency } from '@/lib/formatter';
 
 interface RegionalStats {
     totalUMKM: number;
@@ -107,7 +108,7 @@ export default function PejabatDashboard() {
                 />
                 <StatsCard
                     label="Total Omzet"
-                    value={`Rp ${(stats.totalOmzet / 1000000).toFixed(0)}M`}
+                    value={formatCurrency(stats.totalOmzet)}
                     icon={<BarChart3 className="text-green-400" size={24} />}
                 />
             </div>

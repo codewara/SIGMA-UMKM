@@ -1,13 +1,16 @@
 'use client';
 
+import { formatCurrency } from '@/lib/formatter';
+
 interface FinancialLog {
     umkm_id: string;
     bulan: number;
     tahun: number;
     omzet: number;
-    pengeluaran: number;
-    laba: number;
+    jumlah_karyawan: number;
+    catatan?: string;
     tanggal_input?: Date;
+    is_flagged?: boolean;
 }
 
 interface FinancialChartProps {
@@ -15,14 +18,14 @@ interface FinancialChartProps {
 }
 
 const MONTH_NAMES = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+    'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
 ];
 
 export function FinancialChart({ logs }: FinancialChartProps) {
     if (logs.length === 0) {
         return (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-white/60">
                 Tidak ada data untuk ditampilkan
             </div>
         );
@@ -32,43 +35,67 @@ export function FinancialChart({ logs }: FinancialChartProps) {
     const sortedLogs = [...logs].sort((a, b) => a.bulan - b.bulan);
 
     // Find max value for scaling
-    const maxValue = Math.max(...sortedLogs.flatMap(log => [log.omzet, log.pengeluaran, log.laba]));
-    const scale = maxValue > 0 ? 100 / maxValue : 100;
+    const maxOmzet = Math.max(...sortedLogs.map(log => log.omzet), 1);
+    const maxKaryawan = Math.max(...sortedLogs.map(log => log.jumlah_karyawan), 1);
 
     return (
         <div className="space-y-8">
-            {/* Chart 1: Omzet vs Pengeluaran vs Laba */}
+            {/* Chart 1: Omzet Trend */}
             <div>
-                <h3 className="text-sm font-semibold text-gray-700 mb-4">Perbandingan Omzet, Pengeluaran & Laba</h3>
-                <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-white/80 mb-4">📊 Tren Omzet Bulanan</h3>
+                <div className="space-y-3">
                     {sortedLogs.map((log) => (
                         <div key={`${log.bulan}-${log.tahun}`}>
-                            <div className="flex items-center justify-between mb-1">
-                                <span className="text-xs font-medium text-gray-600">
-                                    {MONTH_NAMES[log.bulan - 1]}
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-xs font-medium text-white/70">
+                                    {MONTH_NAMES[log.bulan - 1]} {log.tahun}
                                 </span>
-                                <div className="flex gap-4 text-xs">
-                                    <span className="text-blue-600 font-medium">
-                                        Rp {(log.omzet / 1000000).toFixed(1)}M
+                                <span className="text-xs font-bold text-cyan-300">
+                                    {formatCurrency(log.omzet)}
+                                </span>
+                            </div>
+                            <div className="relative h-8 bg-white/10 rounded-lg overflow-hidden border border-white/10">
+                                <div
+                                    className="absolute inset-y-0 left-0 bg-gradient-to-r from-cyan-500 to-blue-500 transition-all"
+                                    style={{ width: `${(log.omzet / maxOmzet) * 100}%` }}
+                                    title={`Omzet: Rp ${log.omzet.toLocaleString('id-ID')}`}
+                                />
+                                <div className="absolute inset-0 flex items-center px-3">
+                                    <span className="text-xs font-medium text-white/60">
+                                        {Math.round((log.omzet / maxOmzet) * 100)}%
                                     </span>
                                 </div>
                             </div>
-                            <div className="flex gap-2 h-6 bg-gray-100 rounded overflow-hidden">
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* Chart 2: Jumlah Karyawan Trend */}
+            <div>
+                <h3 className="text-sm font-semibold text-white/80 mb-4">👥 Tren Jumlah Karyawan</h3>
+                <div className="space-y-3">
+                    {sortedLogs.map((log) => (
+                        <div key={`emp-${log.bulan}-${log.tahun}`}>
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-xs font-medium text-white/70">
+                                    {MONTH_NAMES[log.bulan - 1]} {log.tahun}
+                                </span>
+                                <span className="text-xs font-bold text-purple-300">
+                                    {log.jumlah_karyawan} Orang
+                                </span>
+                            </div>
+                            <div className="relative h-8 bg-white/10 rounded-lg overflow-hidden border border-white/10">
                                 <div
-                                    className="bg-blue-500 transition-all"
-                                    style={{ width: `${(log.omzet * scale) / 3}%` }}
-                                    title={`Omzet: Rp ${log.omzet.toLocaleString('id-ID')}`}
+                                    className="absolute inset-y-0 left-0 bg-gradient-to-r from-purple-500 to-pink-500 transition-all"
+                                    style={{ width: `${(log.jumlah_karyawan / maxKaryawan) * 100}%` }}
+                                    title={`Karyawan: ${log.jumlah_karyawan}`}
                                 />
-                                <div
-                                    className="bg-red-500 transition-all"
-                                    style={{ width: `${(log.pengeluaran * scale) / 3}%` }}
-                                    title={`Pengeluaran: Rp ${log.pengeluaran.toLocaleString('id-ID')}`}
-                                />
-                                <div
-                                    className="bg-green-500 transition-all"
-                                    style={{ width: `${(log.laba * scale) / 3}%` }}
-                                    title={`Laba: Rp ${log.laba.toLocaleString('id-ID')}`}
-                                />
+                                <div className="absolute inset-0 flex items-center px-3">
+                                    <span className="text-xs font-medium text-white/60">
+                                        {Math.round((log.jumlah_karyawan / maxKaryawan) * 100)}%
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     ))}
@@ -76,40 +103,14 @@ export function FinancialChart({ logs }: FinancialChartProps) {
             </div>
 
             {/* Legend */}
-            <div className="flex gap-6 text-sm">
+            <div className="flex gap-6 text-xs border-t border-white/10 pt-4">
                 <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-blue-500 rounded"></div>
-                    <span className="text-gray-600">Omzet</span>
-                </div>
-                <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-red-500 rounded"></div>
-                    <span className="text-gray-600">Pengeluaran</span>
+                    <div className="w-4 h-4 bg-gradient-to-r from-cyan-500 to-blue-500 rounded"></div>
+                    <span className="text-white/70">Omzet (Rp)</span>
                 </div>
                 <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-green-500 rounded"></div>
-                    <span className="text-gray-600">Laba</span>
-                </div>
-            </div>
-
-            {/* Summary Stats */}
-            <div className="grid grid-cols-3 gap-4 pt-4 border-t border-gray-200">
-                <div className="text-center">
-                    <p className="text-xs text-gray-600 mb-1">Total Omzet</p>
-                    <p className="text-lg font-bold text-blue-600">
-                        Rp {(sortedLogs.reduce((sum, log) => sum + log.omzet, 0) / 1000000).toFixed(1)}M
-                    </p>
-                </div>
-                <div className="text-center">
-                    <p className="text-xs text-gray-600 mb-1">Total Pengeluaran</p>
-                    <p className="text-lg font-bold text-red-600">
-                        Rp {(sortedLogs.reduce((sum, log) => sum + log.pengeluaran, 0) / 1000000).toFixed(1)}M
-                    </p>
-                </div>
-                <div className="text-center">
-                    <p className="text-xs text-gray-600 mb-1">Total Laba</p>
-                    <p className="text-lg font-bold text-green-600">
-                        Rp {(sortedLogs.reduce((sum, log) => sum + log.laba, 0) / 1000000).toFixed(1)}M
-                    </p>
+                    <div className="w-4 h-4 bg-gradient-to-r from-purple-500 to-pink-500 rounded"></div>
+                    <span className="text-white/70">Jumlah Karyawan</span>
                 </div>
             </div>
         </div>

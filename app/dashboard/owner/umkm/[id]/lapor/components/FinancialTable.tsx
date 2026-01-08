@@ -1,13 +1,16 @@
 'use client';
 
+import { formatCurrencyFull } from '@/lib/formatter';
+
 interface FinancialLog {
     umkm_id: string;
     bulan: number;
     tahun: number;
     omzet: number;
-    pengeluaran: number;
-    laba: number;
+    jumlah_karyawan: number;
+    catatan?: string;
     tanggal_input?: Date;
+    is_flagged?: boolean;
 }
 
 interface FinancialTableProps {
@@ -25,86 +28,66 @@ export function FinancialTable({ logs }: FinancialTableProps) {
         return b.bulan - a.bulan;
     });
 
-    const formatCurrency = (value: number) => {
-        return new Intl.NumberFormat('id-ID', {
-            style: 'currency',
-            currency: 'IDR',
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0,
-        }).format(value);
+    const formatCurrencyDisplay = (value: number) => {
+        return formatCurrencyFull(value);
     };
 
     return (
         <div className="overflow-x-auto">
             <table className="w-full">
                 <thead>
-                    <tr className="border-b border-gray-200 bg-gray-50">
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                    <tr className="border-b border-white/20 bg-white/5">
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-cyan-300 uppercase tracking-wider">
                             Periode
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-cyan-300 uppercase tracking-wider">
                             Omzet
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                            Pengeluaran
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-cyan-300 uppercase tracking-wider">
+                            Karyawan
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                            Laba
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-cyan-300 uppercase tracking-wider">
+                            Catatan
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                            Margin
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-cyan-300 uppercase tracking-wider">
                             Tanggal Input
                         </th>
                     </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-white/10">
                     {sortedLogs.map((log) => {
-                        const margin = log.omzet > 0 ? ((log.laba / log.omzet) * 100).toFixed(1) : '0';
                         const tanggalInput = log.tanggal_input 
                             ? new Date(log.tanggal_input).toLocaleDateString('id-ID')
                             : '-';
 
                         return (
-                            <tr key={`${log.tahun}-${log.bulan}`} className="hover:bg-gray-50 transition-colors">
+                            <tr key={`${log.tahun}-${log.bulan}`} className="hover:bg-white/5 transition-colors border-white/10">
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <div>
-                                        <p className="font-medium text-gray-900">
+                                        <p className="font-semibold text-white">
                                             {MONTH_NAMES[log.bulan - 1]} {log.tahun}
                                         </p>
                                     </div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                    <p className="font-medium text-blue-600">
-                                        {formatCurrency(log.omzet)}
+                                    <p className="font-medium text-cyan-300">
+                                        {formatCurrencyDisplay(log.omzet)}
                                     </p>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                    <p className="text-red-600">
-                                        {formatCurrency(log.pengeluaran)}
+                                    <p className="text-white/80">
+                                        {log.jumlah_karyawan} Orang
+                                    </p>
+                                </td>
+                                <td className="px-6 py-4 max-w-xs">
+                                    <p className="text-white/70 text-sm truncate" title={log.catatan}>
+                                        {log.catatan || '-'}
                                     </p>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                    <p className={log.laba >= 0 ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>
-                                        {formatCurrency(log.laba)}
+                                    <p className="text-white/60 text-sm">
+                                        {tanggalInput}
                                     </p>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-12 h-2 bg-gray-200 rounded-full overflow-hidden">
-                                            <div
-                                                className={`h-full ${parseFloat(margin) >= 20 ? 'bg-green-500' : parseFloat(margin) >= 10 ? 'bg-yellow-500' : 'bg-red-500'}`}
-                                                style={{ width: `${Math.min(parseFloat(margin), 100)}%` }}
-                                            />
-                                        </div>
-                                        <span className="text-sm font-medium text-gray-700 w-10">
-                                            {margin}%
-                                        </span>
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                    {tanggalInput}
                                 </td>
                             </tr>
                         );
