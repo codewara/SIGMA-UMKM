@@ -177,7 +177,7 @@ export async function PATCH(req: NextRequest) {
         // Update flag status in Cassandra
         const query = `
             UPDATE sigma_ks.umkm_financial_log
-            SET is_flagged = ?, flag_reason = ?, flag_timestamp = ?
+            SET is_flagged = ?, flag_reason = ?, flagged_at = ?
             WHERE umkm_id = ? AND tahun = ? AND bulan = ?
         `;
 
