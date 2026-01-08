@@ -169,4 +169,9 @@ export async function verifyEmail(token: string) {
         { _id: new UUID(userId.toString()) },
         { $set: { account_status: "active" }, $unset: { expires_at: "" } }
     );
+
+    await cassandra.execute(
+        'DELETE FROM temp_tokens WHERE token_value = ?',
+        [token], { prepare: true }
+    );
 }

@@ -9,8 +9,9 @@ import { UUID } from 'mongodb';
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const { user, error } = await requireAuth(['PEJABAT', 'ADMIN']);
     if (error) {
@@ -29,14 +30,14 @@ export async function PATCH(
     const db = await connectMongo();
     const umkmCollection = db.collection('umkm_profiles');
 
-    // @ts-expect-error cast _id to UUID
     const result = await umkmCollection.updateOne(
-      { _id: new UUID(params.id) },
+      // @ts-expect-error cast _id to UUID
+      { _id: new UUID(id) },
       {
         $set: {
           'legalitas.status_verifikasi': action === 'approve' ? 'VERIFIED' : 'REJECTED',
           'legalitas.verified_at': new Date(),
-          'legalitas.verified_by': user.email,
+          'legalitas.verified_by': user!.email,
         },
       }
     );
