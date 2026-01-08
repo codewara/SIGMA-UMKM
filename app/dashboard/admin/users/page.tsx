@@ -84,19 +84,29 @@ export default function UsersPage() {
       return;
     }
 
+    setError(null);
+    setSuccess(null);
+
     try {
       const response = await fetch(`/api/admin/users/${id}`, {
         method: 'DELETE',
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error('Gagal menghapus pengguna');
+        throw new Error(data.error || 'Gagal menghapus pengguna');
       }
 
       setSuccess('Pengguna berhasil dihapus');
       setUsers(users.filter(u => u._id !== id));
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccess(null), 3000);
     } catch (err: any) {
-      setError(err.message || 'Gagal menghapus pengguna');
+      const errorMsg = err.message || 'Gagal menghapus pengguna';
+      setError(errorMsg);
+      console.error('Delete user error:', err);
     }
   };
 

@@ -9,7 +9,7 @@ import { UUID } from 'mongodb';
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { user, error } = await requireAuth(['ADMIN']);
@@ -17,7 +17,16 @@ export async function DELETE(
       return NextResponse.json({ error }, { status: 403 });
     }
 
-    const { id } = params;
+    const { id } = await params;
+
+    if (!id) {
+      return NextResponse.json(
+        { error: 'ID pengguna diperlukan' },
+        { status: 400 }
+      );
+    }
+
+    console.log('Attempting to delete user with ID:', id);
 
     const db = await connectMongo();
     const usersCollection = db.collection('users');
@@ -31,9 +40,22 @@ export async function DELETE(
       );
     }
 
+    // Try to parse as UUID, if it fails try as string
+    let deleteQuery: any = {};
+    try {
+      // @ts-expect-error UUID casting
+      deleteQuery = { _id: new UUID(id) };
+      console.log('Using UUID query:', deleteQuery);
+    } catch (err) {
+      // If UUID parsing fails, try without UUID wrapper
+      console.log('UUID parsing failed, using string query');
+      deleteQuery = { _id: id };
+    }
+
     // Delete user
-    // @ts-expect-error UUID casting
-    const result = await usersCollection.deleteOne({ _id: new UUID(id) });
+    console.log('Delete query:', deleteQuery);
+    const result = await usersCollection.deleteOne(deleteQuery);
+    console.log('Delete result:', result);
 
     if (result.deletedCount === 0) {
       return NextResponse.json(
@@ -43,8 +65,13 @@ export async function DELETE(
     }
 
     // Also delete their sessions
-    // @ts-expect-error UUID casting
-    await sessionsCollection.deleteMany({ user_id: new UUID(id) });
+    try {
+      // @ts-expect-error UUID casting
+      await sessionsCollection.deleteMany({ user_id: new UUID(id) });
+    } catch (err) {
+      // Ignore session deletion errors
+      await sessionsCollection.deleteMany({ user_id: id });
+    }
 
     return NextResponse.json({
       message: 'User berhasil dihapus',
@@ -52,7 +79,7 @@ export async function DELETE(
   } catch (error) {
     console.error('DELETE /api/admin/users/[id] error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }
     );
   }
