@@ -117,7 +117,7 @@ export async function POST(req: NextRequest) {
         const newUmkm = {
             _id: newId,
             ...parsed,
-            owner_id: user.role === "UMKM_OWNER" ? user._id : parsed.owner_id || null,
+            owner_id: user.role === "UMKM_OWNER" ? new UUID(user._id) : new UUID(parsed.owner_id) || null,
             legalitas: {
                 ...parsed.legalitas,
                 status_verifikasi: user.role === "UMKM_OWNER" ? "PENDING" : "VERIFIED",
@@ -128,6 +128,7 @@ export async function POST(req: NextRequest) {
             summary_terakhir: null,
         };
 
+        // @ts-expect-error UUID insertion
         await umkmCollection.insertOne(newUmkm);
         return NextResponse.json({ message: "UMKM Berhasil Didaftarkan", data: newUmkm }, { status: 201 });
     } catch (err) {

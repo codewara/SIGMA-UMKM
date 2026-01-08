@@ -18,27 +18,22 @@ export default function OwnerUMKMListPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    async function fetchOwnerUMKMs() {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/umkm');
+        if (response.ok) {
+          const data = await response.json();
+          setUmkms(data.data || []);
+        }
+      } catch (error) {
+        console.error('Failed to fetch UMKMs:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
     fetchOwnerUMKMs();
   }, []);
-
-  const fetchOwnerUMKMs = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch('/api/umkm');
-      if (response.ok) {
-        const data = await response.json();
-        setUmkms(data.data || []);
-      }
-    } catch (error) {
-      console.error('Failed to fetch UMKMs:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const formatCurrencyDisplay = (value: number) => {
-    return formatCurrencyFull(value);
-  };
 
   return (
     <div className="min-h-screen bg-[#0f172a] p-4 sm:p-6 lg:p-8">
@@ -98,7 +93,7 @@ export default function OwnerUMKMListPage() {
                       <div className="space-y-2 text-white/70 text-sm">
                         <p>🏢 Sektor: <span className="text-white font-medium">{umkm.sektor}</span></p>
                         {umkm.summary_terakhir?.omzet_terakhir && (
-                          <p>💰 Omzet Terakhir: <span className="text-cyan-300 font-medium">{formatCurrencyDisplay(umkm.summary_terakhir.omzet_terakhir)}</span></p>
+                          <p>💰 Omzet Terakhir: <span className="text-cyan-300 font-medium">{formatCurrencyFull(umkm.summary_terakhir.omzet_terakhir)}</span></p>
                         )}
                       </div>
                     </div>
