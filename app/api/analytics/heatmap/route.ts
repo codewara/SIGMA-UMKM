@@ -1,6 +1,7 @@
 import { connectCassandra, connectMongo } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
+import { UUID } from "mongodb";
 
 /**
  * GET /api/analytics/heatmap
@@ -146,9 +147,10 @@ export async function GET(req: NextRequest) {
 
     if (user.role === "UMKM_OWNER") {
       // Own scope: competitor map around own location
+      // @ts-expect-error cast user._id to UUID for comparison
       const myUmkms = await mongo
         .collection("umkm_profiles")
-        .find({ owner_id: user._id })
+        .find({ owner_id: new UUID(user._id) })
         .toArray();
 
       if (myUmkms.length === 0) {
@@ -186,7 +188,8 @@ export async function GET(req: NextRequest) {
               $maxDistance: 5000, // 5km radius
             },
           },
-          owner_id: { $ne: user._id },
+          // @ts-expect-error cast user._id to UUID for comparison
+          owner_id: { $ne: new UUID(user._id) },
         })
         .limit(20)
         .toArray();

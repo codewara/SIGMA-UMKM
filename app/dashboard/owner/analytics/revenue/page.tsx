@@ -22,11 +22,11 @@ export default function OwnerRevenueAnalytics() {
       const response = await fetch('/api/analytics/revenue?scope=own');
       if (response.ok) {
         const data = await response.json();
-        const { totalRevenue: total, byMonth: months, bySector: sectors } = data.data;
+        const responseData = data.data || {};
         
-        setTotalRevenue(total || 0);
-        setByMonth(months || []);
-        setBySector(sectors || []);
+        setTotalRevenue(responseData.totalRevenue || 0);
+        setByMonth(responseData.byMonth || []);
+        setBySector(responseData.bySector || []);
       }
     } catch (error) {
       console.error('Failed to fetch revenue data:', error);

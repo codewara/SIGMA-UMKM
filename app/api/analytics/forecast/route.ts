@@ -1,6 +1,7 @@
 import { connectCassandra, connectMongo } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
+import { UUID } from "mongodb";
 
 /**
  * GET /api/analytics/forecast
@@ -180,9 +181,10 @@ export async function GET(req: NextRequest) {
 
     if (user.role === "UMKM_OWNER") {
       // Own scope: forecast of own UMKM
+      // @ts-expect-error cast user._id to UUID for comparison
       const myUmkms = await mongo
         .collection("umkm_profiles")
-        .find({ owner_id: user._id })
+        .find({ owner_id: new UUID(user._id) })
         .toArray();
 
       const forecastData: any = {};
@@ -205,7 +207,10 @@ export async function GET(req: NextRequest) {
 
       return NextResponse.json({
         message: "Owner forecast analytics - Own scope",
-        data: forecastData,
+        data: {
+          predictions: Object.values(forecastData),
+          totalUmkms: Object.keys(forecastData).length,
+        },
       });
     }
 

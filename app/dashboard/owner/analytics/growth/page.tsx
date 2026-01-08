@@ -19,11 +19,11 @@ export default function OwnerGrowthAnalytics() {
       const response = await fetch('/api/analytics/growth?scope=own');
       if (response.ok) {
         const data = await response.json();
-        const { topGrowers: top, sectorGrowth: sectors, totalUmkms: total } = data.data;
+        const responseData = data.data || {};
         
-        setTopGrowers(top || []);
-        setSectorGrowth(sectors || []);
-        setTotalUmkms(total || 0);
+        setTopGrowers(responseData.topGrowers || []);
+        setSectorGrowth(responseData.sectorGrowth || []);
+        setTotalUmkms(responseData.totalUmkms || 0);
       }
     } catch (error) {
       console.error('Failed to fetch growth data:', error);
@@ -32,8 +32,8 @@ export default function OwnerGrowthAnalytics() {
     }
   };
 
-  const avgGrowth = sectorGrowth.length > 0 
-    ? (sectorGrowth.reduce((sum, s) => sum + s.avg_growth, 0) / sectorGrowth.length).toFixed(1)
+  const avgGrowth = topGrowers.length > 0
+    ? (topGrowers.reduce((sum, s) => sum + s.growth_rate, 0) / topGrowers.length).toFixed(1)
     : '0';
 
   return (

@@ -23,10 +23,12 @@ export default function OwnerHeatmapAnalytics() {
       const response = await fetch('/api/analytics/heatmap?scope=own');
       if (response.ok) {
         const data = await response.json();
-        const { clusters: cls, totalUmkms: total } = data.data;
+        const responseData = data.data || {};
+        const clusters = responseData.clusters || [];
+        const totalUmkms = responseData.totalUmkms || clusters.length;
         
-        setClusters((cls || []).sort((a, b) => b.count - a.count));
-        setTotalUmkms(total || 0);
+        setClusters(clusters.sort((a, b) => b.count - a.count));
+        setTotalUmkms(totalUmkms);
       }
     } catch (error) {
       console.error('Failed to fetch heatmap data:', error);

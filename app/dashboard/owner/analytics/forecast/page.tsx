@@ -29,7 +29,9 @@ export default function OwnerForecastAnalytics() {
       const response = await fetch('/api/analytics/forecast?scope=own');
       if (response.ok) {
         const data = await response.json();
-        setPredictions(data.data?.predictions || []);
+        const forecastData = data.data?.predictions || data.data || [];
+        const predictions = Array.isArray(forecastData) ? forecastData : Object.values(forecastData);
+        setPredictions(predictions);
       }
     } catch (error) {
       console.error('Failed to fetch forecast data:', error);
@@ -85,9 +87,9 @@ export default function OwnerForecastAnalytics() {
         ) : (
           <div className="space-y-4">
             {predictions.slice(0, 5).map((item, idx) => {
-              const forecastArray = Array.isArray(item.forecast) ? item.forecast : [];
+              const forecastArray = Array.isArray(item.forecast) ? item.forecast : (item.historical ? [] : []);
               const latestForecast = forecastArray.length > 0 ? forecastArray[forecastArray.length - 1] : undefined;
-              const growth = calculateGrowth(item.current_avg_omzet, latestForecast?.predicted_omzet || 0);
+              const growth = calculateGrowth(item.current_avg_omzet || 0, latestForecast?.predicted_omzet || 0);
               
               return (
                 <div key={idx} className="bg-white/5 border border-white/10 rounded-2xl p-4 hover:border-white/20 transition-all">

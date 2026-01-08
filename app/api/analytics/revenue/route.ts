@@ -1,6 +1,7 @@
 import { connectCassandra, connectMongo } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
+import { UUID } from "mongodb";
 
 /**
  * GET /api/analytics/revenue
@@ -154,9 +155,10 @@ export async function GET(req: NextRequest) {
 
     if (user.role === "UMKM_OWNER") {
       // Own scope: revenue of own UMKM
+      // @ts-expect-error cast user._id to UUID for comparison
       const myUmkms = await mongo
         .collection("umkm_profiles")
-        .find({ owner_id: user._id })
+        .find({ owner_id: new UUID(user._id) })
         .toArray();
 
       const revenueData: any = {};
