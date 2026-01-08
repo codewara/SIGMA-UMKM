@@ -41,6 +41,7 @@ export default function HomePage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [umkmData, setUmkmData] = useState<UMKM[]>([]);
   const [filteredUmkm, setFilteredUmkm] = useState<UMKM[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -70,10 +71,13 @@ export default function HomePage() {
       const res = await fetch('/api/auth/me');
       if (res.ok) {
         const data = await res.json();
+        console.log('✅ User fetched from /api/auth/me:', data.user);
         setUser(data.user);
+      } else {
+        console.log('❌ /api/auth/me returned', res.status, '- User not authenticated');
       }
     } catch (error) {
-      console.error('Failed to fetch user:', error);
+      console.error('❌ Failed to fetch user:', error);
     } finally {
       setIsLoading(false);
     }
@@ -133,7 +137,13 @@ export default function HomePage() {
       <BackgroundElements />
 
       {/* Navigation */}
-      <Navigation />
+      <Navigation 
+        user={user}
+        isLoading={isLoading}
+        showMobileMenu={showMobileMenu}
+        onToggleMobileMenu={() => setShowMobileMenu(!showMobileMenu)}
+        onLogout={handleLogout}
+      />
 
       {/* Hero Section */}
       <HeroSection />

@@ -25,7 +25,10 @@ export default function LoginPage() {
 
       const data = await response.json();
       if (!response.ok) alert(`Login failed: ${data.error || 'Unknown error'}`);
-      else router.replace(data.redirect);
+      else {
+        router.replace(data.redirect);
+        router.refresh();
+      }
     } catch (error) {
       console.error('Login error:', error);
     }

@@ -13,6 +13,7 @@ export async function GET() {
         user: {
             _id: user._id,
             email: user.email,
+            username: user.email.split('@')[0] || user.email,
             role: user.role,
             account_status: user.account_status
         }
