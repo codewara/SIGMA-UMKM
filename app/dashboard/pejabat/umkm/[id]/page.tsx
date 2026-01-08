@@ -85,10 +85,20 @@ export default function DetailUMKMPage() {
             const response = await fetch(`/api/financial-log?umkm_id=${umkmId}&tahun=${selectedYear}`);
             if (response.ok) {
                 const data = await response.json();
-                setLogs(data.logs || []);
+                // Handle both possible response structures and ensure proper typing
+                const logsData = data.logs || data.data || [];
+                const typedLogs = Array.isArray(logsData) ? logsData.map((log: any) => ({
+                    ...log,
+                    omzet: typeof log.omzet === 'number' ? log.omzet : parseInt(log.omzet) || 0,
+                    jumlah_karyawan: typeof log.jumlah_karyawan === 'number' ? log.jumlah_karyawan : parseInt(log.jumlah_karyawan) || 0,
+                    is_flagged: log.is_flagged || false,
+                    flag_reason: log.flag_reason || undefined
+                })) : [];
+                setLogs(typedLogs);
             }
         } catch (err) {
             console.error('Failed to fetch financial logs:', err);
+            setError('Gagal memuat data keuangan');
         }
     };
 
@@ -161,17 +171,6 @@ export default function DetailUMKMPage() {
 
     const currentYear = new Date().getFullYear();
     const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
-                await fetchFinancialLogs();
-            } else {
-                setError('Gagal menandai data');
-            }
-        } catch (err) {
-            setError('Terjadi kesalahan');
-            console.error(err);
-        } finally {
-            setFlagging(null);
-        }
-    };
 
     if (loading) {
         return (
@@ -199,7 +198,6 @@ export default function DetailUMKMPage() {
 
     return (
         <div className="min-h-screen bg-[#0f172a] p-4 sm:p-6 lg:p-8">
-            <div className="max-w-6xl mx-auto space-y-6">
             <div className="max-w-6xl mx-auto space-y-6">
                 {/* Back Button */}
                 <Link href="/dashboard/pejabat/monitoring">

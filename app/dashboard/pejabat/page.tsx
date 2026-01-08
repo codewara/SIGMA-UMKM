@@ -28,12 +28,10 @@ export default function PejabatDashboard() {
     const fetchRegionalStats = async () => {
         try {
             setLoading(true);
-            // Fetch all data in parallel
-            const [umkmRes, pendingRes, flaggedRes, analyticsRes] = await Promise.all([
-                fetch('/api/umkm?status=VERIFIED'),
-                fetch('/api/umkm/pending'),
-                fetch('/api/analytics/financial'),
-                fetch('/api/analytics/revenue')
+            // Fetch available data in parallel
+            const [umkmRes, pendingRes] = await Promise.all([
+                fetch('/api/umkm'),
+                fetch('/api/umkm/pending')
             ]);
 
             let totalUMKM = 0;
@@ -43,12 +41,13 @@ export default function PejabatDashboard() {
 
             if (umkmRes.ok) {
                 const umkmData = await umkmRes.json();
-                totalUMKM = umkmData.data?.length || 0;
+                const umkmList = umkmData.data || [];
+                totalUMKM = umkmList.length;
                 
                 // Calculate total omzet from UMKM data
-                totalOmzet = umkmData.data?.reduce((sum: number, umkm: any) => {
+                totalOmzet = umkmList.reduce((sum: number, umkm: any) => {
                     return sum + (umkm.summary_terakhir?.omzet_terakhir || 0);
-                }, 0) || 0;
+                }, 0);
             }
 
             if (pendingRes.ok) {
@@ -56,11 +55,8 @@ export default function PejabatDashboard() {
                 pendingVerification = pendingData.umkm?.length || 0;
             }
 
-            if (analyticsRes.ok) {
-                const analyticsData = await analyticsRes.json();
-                // Count flagged records from analytics
-                flaggedRecords = analyticsData.data?.filter((record: any) => record.flag_status === 'FLAGGED').length || 0;
-            }
+            // TODO: Implement flaggedRecords from financial logs later
+            flaggedRecords = 0;
 
             setStats({
                 totalUMKM,
