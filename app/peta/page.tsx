@@ -5,6 +5,7 @@ import { MapPin, Loader } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import BackgroundElements from '@/components/BackgroundElements';
 import Footer from '@/components/Footer';
+import MapComponent from './MapComponent';
 import type { User } from '@/lib/types';
 
 interface UMKM {
@@ -125,18 +126,14 @@ export default function PetaPage() {
                 {/* Map placeholder & List */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Map */}
-                    <div className="lg:col-span-2">
-                        <div className="bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 overflow-hidden h-96 flex items-center justify-center group">
-                            <div className="text-center">
-                                <MapPin className="mx-auto mb-4 text-purple-400 group-hover:text-purple-300 transition" size={48} />
-                                <p className="text-white/80">
-                                    Integrasi map akan ditampilkan di sini
-                                </p>
-                                <p className="text-white/50 text-sm mt-1">
-                                    (Gunakan library seperti Leaflet atau Mapbox)
-                                </p>
+                    <div className="lg:col-span-2 rounded-2xl overflow-hidden border border-white/20 h-96">
+                        {loading ? (
+                            <div className="flex items-center justify-center h-full bg-white/10">
+                                <Loader className="animate-spin text-cyan-400" size={32} />
                             </div>
-                        </div>
+                        ) : (
+                            <MapComponent umkms={filteredUmkms} />
+                        )}
                     </div>
 
                     {/* Sidebar - UMKM List */}
