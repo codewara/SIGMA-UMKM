@@ -144,7 +144,7 @@ export async function sendEmail(to: string, token: string) {
         html: `
         <p>
           Please verify your email by clicking the following link:
-          <a href="${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/verify-email?token=${token}">
+          <a href="${process.env.NEXT_PUBLIC_BASE_URL}/auth/verify/${token}">
             Verify Email
           </a>
         </p>
@@ -168,5 +168,10 @@ export async function verifyEmail(token: string) {
         // @ts-expect-error cast _id to UUID
         { _id: new UUID(userId.toString()) },
         { $set: { account_status: "active" }, $unset: { expires_at: "" } }
+    );
+
+    await cassandra.execute(
+        'DELETE FROM temp_tokens WHERE token_value = ?',
+        [token], { prepare: true }
     );
 }

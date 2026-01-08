@@ -174,7 +174,9 @@ export async function GET(req: NextRequest) {
           
           growthData[umkm._id] = {
             nama_usaha: umkm.nama_usaha,
+            sektor: umkm.sektor,
             growth_rate: Math.round(growthRate * 10) / 10,
+            latest_omzet: latest.omzet,
             logs: logs.slice(0, 12),
           };
         }

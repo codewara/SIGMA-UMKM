@@ -11,24 +11,69 @@ SIGMA-UMKM is a dual-database system designed to handle both transactional and a
 ## 🏗️ Architecture & Data Flow
 
 ```mermaid
-flowchart TB
-    Client[Client Browser]
-    NextJS[Next.js App Router]
-    API[API Routes]
-    Mongo[(MongoDB:<br/>umkm_profiles<br/>users<br/>sessions)]
-    Cass[(Cassandra:<br/>financial_log<br/>login_logs<br/>dashboard_stats)]
+flowchart LR
+    subgraph Users["👥 Users"]
+        Public["Public"]
+        Owner["UMKM_OWNER"]
+        Pejabat["PEJABAT"]
+        Admin["ADMIN"]
+    end
     
-    Client -->|HTTP Request| NextJS
-    NextJS --> API
-    API -->|Profile, Auth| Mongo
-    API -->|Financial, Audit| Cass
-    API -->|Denormalized Reads| Mongo
-    API -->|Time-Series Writes| Cass
+    subgraph App["Next.js Application"]
+        Frontend["Frontend Pages"]
+        API["API Routes"]
+        Services["Services Layer"]
+    end
     
-    style Mongo fill:#13aa52
-    style Cass fill:#1287b1
-    style NextJS fill:#000000
+    subgraph DB["Databases"]
+        Mongo[("MongoDB<br/>Profiles & Auth")]
+        Cass[("Cassandra<br/>Financial & Logs")]
+    end
+    
+    Users --> Frontend
+    Frontend --> API
+    API --> Services
+    Services --> Mongo
+    Services --> Cass
+    
+    style Mongo fill:#13aa52,color:#fff
+    style Cass fill:#1287b1,color:#fff
+    style Public fill:#e1f5ff
+    style Owner fill:#fff3e0
+    style Pejabat fill:#f3e5f5
+    style Admin fill:#ffebee
 ```
+
+### Architecture Overview
+
+**User Roles:**
+- 🌐 **Public** - Browse verified UMKMs (no login)
+- 👤 **UMKM_OWNER** - Register business, input revenue
+- 👔 **PEJABAT** - Verify UMKMs, flag suspicious data
+- ⚡ **ADMIN** - Full system management
+
+**Technology Stack:**
+- **Frontend**: Next.js 16 + React 19 + Tailwind CSS 4
+- **Backend**: Next.js API Routes + Service Layer
+- **Databases**: MongoDB (profiles) + Cassandra (time-series)
+- **Auth**: bcrypt + HTTP-only cookies + RBAC
+
+**Key Workflows:**
+
+1. **UMKM Registration → Verification**
+   ```
+   Owner registers → PENDING → Pejabat reviews → VERIFIED/REJECTED
+   ```
+
+2. **Financial Data → Flagging**
+   ```
+   Owner inputs revenue → Pejabat flags suspicious → Owner gets notified
+   ```
+
+3. **Data Persistence Strategy**
+   - **MongoDB**: UMKM profiles, users, sessions (transactional)
+   - **Cassandra**: Financial logs, notifications, audit trails (time-series)
+   - **Cache**: Latest financial summary in MongoDB for fast reads
 
 ## 📊 Database Schemas
 
@@ -247,7 +292,7 @@ SIGMA-UMKM/
 │   │   │   └── users/
 │   │   │       ├── route.ts          # GET/POST /api/admin/users (User Management)
 │   │   │       └── [id]/
-│   │   │           └── route.ts      # DELETE /api/admin/users/[id]
+│   │   │           └── route.ts      # PATCH|DELETE /api/admin/users/[id]
 │   │   ├── auth/
 │   │   │   ├── login/route.ts        # POST /api/auth/login
 │   │   │   ├── logout/route.ts       # POST /api/auth/logout
@@ -256,17 +301,28 @@ SIGMA-UMKM/
 │   │   │   └── verify-email/route.ts # GET /api/auth/verify-email?token=...
 │   │   ├── umkm/
 │   │   │   ├── route.ts              # GET|POST /api/umkm
-│   │   │   ├── pending/route.ts      # GET /api/umkm/pending (Pejabat)
-│   │   │   ├── locations/route.ts    # GET /api/umkm/locations (Geospatial)
+│   │   │   ├── pending/route.ts      # GET /api/umkm/pending (PEJABAT)
+│   │   │   ├── my-umkm/route.ts      # GET /api/umkm/my-umkm (UMKM_OWNER)
 │   │   │   └── [id]/
-│   │   │       ├── route.ts          # GET|PATCH|DELETE /api/umkm/[id]
-│   │   │       └── verify/route.ts   # PATCH /api/umkm/[id]/verify (Pejabat)
+│   │   │       └── route.ts          # GET|PATCH|DELETE /api/umkm/[id]
 │   │   ├── analytics/
-│   │   │   └── financial/
-│   │   │       ├── route.ts          # GET|POST /api/analytics/financial
-│   │   │       └── [umkm_id]/
-│   │   │           ├── route.ts      # GET|PATCH|DELETE /api/analytics/financial/[umkm_id]
-│   │   │           └── flag/route.ts # PATCH /api/analytics/financial/[umkm_id]/flag
+│   │   │   ├── financial/route.ts    # GET /api/analytics/financial
+│   │   │   ├── forecast/route.ts     # GET /api/analytics/forecast
+│   │   │   ├── growth/route.ts       # GET /api/analytics/growth
+│   │   │   ├── heatmap/route.ts      # GET /api/analytics/heatmap
+│   │   │   └── revenue/route.ts      # GET /api/analytics/revenue
+│   │   ├── financial/
+│   │   │   └── [umkm_id]/route.ts    # GET /api/financial/[umkm_id]
+│   │   ├── financial-log/
+│   │   │   └── route.ts              # GET|POST /api/financial-log
+│   │   ├── verification/
+│   │   │   ├── pending/route.ts      # GET /api/verification/pending
+│   │   │   └── [id]/route.ts         # POST /api/verification/[id] (approve/reject)
+│   │   ├── notifications/
+│   │   │   ├── route.ts              # GET /api/notifications
+│   │   │   └── [id]/route.ts         # PATCH /api/notifications/[id]
+│   │   ├── dashboard/
+│   │   │   └── owner/route.ts        # GET /api/dashboard/owner
 │   │   └── test/route.ts             # Database connection test
 │   ├── auth/
 │   │   ├── login/page.tsx            # Login form
@@ -311,14 +367,20 @@ SIGMA-UMKM/
 │   ├── layout.tsx                    # Root layout
 │   └── page.tsx                      # Homepage (landing page with role-based navigation)
 ├── services/
-│   └── auth.service.ts               # Auth business logic
+│   ├── auth.service.ts               # Auth business logic (registration, login, sessions)
+│   ├── financial.service.ts          # Financial logs, flagging, owner notifications
+│   └── verification.service.ts       # UMKM verification (approve/reject)
 ├── lib/
 │   ├── auth.ts                       # RBAC middleware & session management
 │   ├── db.ts                         # MongoDB & Cassandra connections
 │   ├── mailer.ts                     # Nodemailer config (email verification)
 │   ├── types.ts                      # TypeScript types & interfaces
+│   ├── rbac-helpers.ts               # RBAC helper functions
+│   ├── formatter.ts                  # Data formatting utilities
 │   └── validation/
+│       ├── auth.schema.ts            # Zod validation for auth (login, register)
 │       ├── umkm_profile.schema.ts    # Zod validation for UMKM profiles
+│       ├── financial.schema.ts       # Zod validation for financial flagging
 │       └── umkm_financial.schema.ts  # Zod validation for financial logs
 ├── db/
 │   ├── schema_umkm.cql               # Cassandra keyspace & tables
@@ -372,8 +434,10 @@ docker compose up -d
 **MongoDB (includes UMKM profiles + pre-seeded user accounts):**
 ```bash
 docker cp db/seed_mongo.js sigma-mongo:/seed_mongo.js
-docker exec -it sigma-mongo mongosh -u mongo_username -p mongo_password --authenticationDatabase admin /seed_mongo.js
+docker exec -it sigma-mongo mongosh -u <MONGO_USERNAME> -p <MONGO_PASSWORD> --authenticationDatabase admin /seed_mongo.js
 ```
+
+Replace `<MONGO_USERNAME>` and `<MONGO_PASSWORD>` with your actual MongoDB credentials from `.env`.
 
 This will create:
 - ✅ 10 UMKM profiles (Kuliner, Fashion, Jasa, Kriya)
@@ -383,9 +447,11 @@ This will create:
 ```bash
 docker cp db/schema_umkm.cql sigma-cassandra:/schema_umkm.cql
 docker cp db/seed_umkm.cql sigma-cassandra:/seed_umkm.cql
-docker exec -it sigma-cassandra cqlsh -u cassandra_username -p cassandra_password -f /schema_umkm.cql
-docker exec -it sigma-cassandra cqlsh -u cassandra_username -p cassandra_password -f /seed_umkm.cql
+docker exec -it sigma-cassandra cqlsh -u <CASSANDRA_USERNAME> -p <CASSANDRA_PASSWORD> -f /schema_umkm.cql
+docker exec -it sigma-cassandra cqlsh -u <CASSANDRA_USERNAME> -p <CASSANDRA_PASSWORD> -f /seed_umkm.cql
 ```
+
+Replace `<CASSANDRA_USERNAME>` and `<CASSANDRA_PASSWORD>` with your actual Cassandra credentials from `.env`.
 
 ### 4. Install Dependencies & Run
 
@@ -412,92 +478,39 @@ The MongoDB seeder automatically creates these accounts for testing:
 - No login needed - browse [http://localhost:3000](http://localhost:3000) without authentication
 - Public users automatically receive restricted/aggregated data only
 
-### Pre-Seeded Test Accounts (Detailed)
+### How to Use Test Accounts
 
-| Email | Password | Role | Status |
-|-------|----------|------|--------|
-| admin@sigma-umkm.com | admin123 | ADMIN | ✅ Active |
-| pejabat@sigma-umkm.com | pejabat123 | PEJABAT | ✅ Active |
-| owner@sigma-umkm.com | owner123 | UMKM_OWNER | ✅ Active |
+**All accounts are pre-activated and ready to use immediately** - no email verification required for seeded accounts.
 
-**Activate User Accounts (Development Only):**
+**Quick Start:**
+1. Go to [http://localhost:3000/auth/login](http://localhost:3000/auth/login)
+2. Login with any of the accounts above
+3. You'll be automatically redirected to the appropriate dashboard:
+   - ADMIN → `/dashboard/admin`
+   - PEJABAT → `/dashboard/pejabat`
+   - UMKM_OWNER → `/dashboard/owner`
 
-Since email verification is not configured, manually activate accounts using one of these methods:
-
-**Option 1: Via MongoDB Shell (Recommended)**
-```bash
-# Activate ADMIN
-docker exec -it sigma-mongo mongosh -u root -p sigma --authenticationDatabase admin sigma_db --eval "db.users.updateOne({ email: 'admin@sigma-umkm.com' }, { \$set: { account_status: 'active' } })"
-
-# Activate PEJABAT
-docker exec -it sigma-mongo mongosh -u root -p sigma --authenticationDatabase admin sigma_db --eval "db.users.updateOne({ email: 'pejabat@sigma-umkm.com' }, { \$set: { account_status: 'active' } })"
-
-# Activate UMKM_OWNER #1
-docker exec -it sigma-mongo mongosh -u root -p sigma --authenticationDatabase admin sigma_db --eval "db.users.updateOne({ email: 'owner@sigma-umkm.com' }, { \$set: { account_status: 'active' } })"
-
-# Verify all users are active
-docker exec -it sigma-mongo mongosh -u root -p sigma --authenticationDatabase admin sigma_db --eval "db.users.find({ account_status: 'active' }, { email: 1, role: 1, account_status: 1 }).pretty()"
-```
-
-**Option 2: Interactive MongoDB Shell**
-```bash
-# Enter MongoDB shell
-docker exec -it sigma-mongo mongosh -u root -p sigma --authenticationDatabase admin sigma_db
-
-# Then run these commands:
-db.users.updateMany({ role: { $in: ["ADMIN", "PEJABAT", "UMKM_OWNER"] } }, { $set: { account_status: "active" } })
-
-# Verify
-db.users.find().pretty()
-```
-
-**Option 3: Via Node.js Script (if needed)**
-```javascript
-// Create file: activate-users.js
-import { MongoClient, UUID } from 'mongodb';
-
-const MONGO_URI = 'mongodb://root:sigma@localhost:27018?authSource=admin';
-const client = new MongoClient(MONGO_URI);
-
-async function activateUsers() {
-  try {
-    const db = client.db('sigma_db');
-    const users = db.collection('users');
-    
-    const result = await users.updateMany(
-      { role: { $in: ["ADMIN", "PEJABAT", "UMKM_OWNER"] } },
-      { $set: { account_status: "active" } }
-    );
-    
-    console.log(`✅ Updated ${result.modifiedCount} users to active status`);
-    
-    // Verify
-    const active = await users.find({ account_status: "active" }).toArray();
-    console.log("Active users:", active.map(u => ({ email: u.email, role: u.role })));
-  } finally {
-    await client.close();
-  }
-}
-
-activateUsers();
-```
-
-**Creating Additional Users (Optional):**
-Only ADMIN and PEJABAT roles can be registered. Use the registration API:
-
+**Creating Additional Users (If Needed):**
+You can register new UMKM_OWNER accounts through:
+- **Frontend:** [http://localhost:3000/auth/register](http://localhost:3000/auth/register)
+- **API:**
 ```bash
 curl -X POST http://localhost:3000/api/auth/register \
   -H "Content-Type: application/json" \
-  -d '{"email":"newadmin@test.com","password":"pass123","role":"ADMIN"}'
+  -d '{"email":"newowner@test.com","password":"pass123","nama_lengkap":"New Owner"}'
 ```
 
-**Note:** New accounts require email verification. After registering via API, activate using commands above.
+**Note:** Email verification is disabled in development mode, so new accounts are immediately active.
 
 **Frontend Pages:**
-- `/` - Homepage with role-based navigation (ADMIN/PEJABAT get action buttons)
+- `/` - Homepage with role-based navigation
 - `/auth/login` - Login page (use pre-seeded accounts above)
-- `/admin` - Admin dashboard (ADMIN only)
-- `/admin/revenue` - Revenue input page (PEJABAT primary focus)
+- `/auth/register` - Registration page (UMKM_OWNER registration)
+- `/dashboard/admin` - Admin dashboard (ADMIN only)
+- `/dashboard/pejabat` - Pejabat dashboard (PEJABAT verification & flagging)
+- `/dashboard/owner` - Owner dashboard (UMKM_OWNER own UMKMs management)
+- `/katalog` - Public UMKM catalog (no login needed)
+- `/peta` - Public geospatial map (no login needed)
 - `/umkm/[id]` - UMKM detail (full data for authenticated, basic for public)
 
 ## 🔐 Authentication Flow
@@ -630,42 +643,45 @@ sequenceDiagram
 | GET | `/api/auth/me` | Get current user info (for frontend) | - |
 
 ### 🏢 UMKM Profile Management (MongoDB)
-| Method | Endpoint | Description | Request Body |
-|--------|----------|-------------|--------------|
-| GET | `/api/umkm` | List all UMKMs | - |
-| POST | `/api/umkm` | Register new UMKM profile | `{ nama_usaha, sektor, pemilik, lokasi, wilayah, legalitas }` |
-| GET | `/api/umkm/[id]` | Get UMKM profile by ID | - |
-| PATCH | `/api/umkm/[id]` | Update UMKM profile | Partial fields |
-| DELETE | `/api/umkm/[id]` | Delete UMKM profile | - |
+| Method | Endpoint | Description | Access | Request Body |
+|--------|----------|-------------|--------|--------------|
+| GET | `/api/umkm` | List UMKMs (filtered by role) | Public/All | - |
+| GET | `/api/umkm/my-umkm` | Get owner's UMKMs | UMKM_OWNER | - |
+| GET | `/api/umkm/pending` | Get pending verifications | PEJABAT/ADMIN | - |
+| POST | `/api/umkm` | Register new UMKM profile | UMKM_OWNER | `{ nama_usaha, sektor, pemilik, lokasi, wilayah, legalitas }` |
+| GET | `/api/umkm/[id]` | Get UMKM profile by ID | Public/All | - |
+| PATCH | `/api/umkm/[id]` | Update UMKM profile | UMKM_OWNER (own) | Partial fields |
+| DELETE | `/api/umkm/[id]` | Soft delete UMKM profile | UMKM_OWNER (own) | - |
 
-### 📊 Financial Analytics (Cassandra)
-| Method | Endpoint | Description | Query Params | Request Body |
-|--------|----------|-------------|--------------|--------------|
-| GET | `/api/analytics/financial` | Get all financial logs | - | - |
-| GET | `/api/analytics/financial/[umkm_id]` | Get financial logs by UMKM ID | `?tahun=2024` | - |
-| POST | `/api/analytics/financial/[umkm_id]` | Create financial log entry | - | `{ tahun, bulan, omzet, jumlah_karyawan, nama_usaha, sektor }` |
-| PATCH | `/api/analytics/financial/[umkm_id]` | Update financial log entry | `?tahun=2024&bulan=6` | Partial fields |
-| DELETE | `/api/analytics/financial/[umkm_id]` | Delete financial log entry | `?tahun=2024&bulan=6` | - |
-### 🚩 Flag Management (PEJABAT - Cassandra)
-| Method | Endpoint | Description | Request Body |
-|--------|----------|-------------|--------------|
-| POST | `/api/financial/[umkm_id]/[tahun]/[bulan]/flag` | Flag suspicious revenue data | `{ flag_reason }` |
-| DELETE | `/api/financial/[umkm_id]/[tahun]/[bulan]/flag` | Remove flag from revenue data | - |
+### 📊 Financial Management (Cassandra)
+| Method | Endpoint | Description | Access | Request Body |
+|--------|----------|-------------|--------|--------------|
+| GET | `/api/financial/[umkm_id]` | Get financial logs by UMKM | All (filtered) | - |
+| GET | `/api/financial-log` | Get financial logs | UMKM_OWNER/PEJABAT/ADMIN | - |
+| POST | `/api/financial-log` | Create financial log entry | UMKM_OWNER | `{ umkm_id, tahun, bulan, omzet, jumlah_karyawan }` |
 
-### ✅ Verification Management (PEJABAT - MongoDB + Cassandra)
+### 📈 Analytics (Cassandra)
+| Method | Endpoint | Description | Access |
+|--------|----------|-------------|--------|
+| GET | `/api/analytics/financial` | Financial analytics | ADMIN/PEJABAT |
+| GET | `/api/analytics/revenue` | Revenue trends | ADMIN/PEJABAT |
+| GET | `/api/analytics/growth` | Growth analysis | ADMIN/PEJABAT |
+| GET | `/api/analytics/forecast` | Revenue forecasting | ADMIN/PEJABAT |
+| GET | `/api/analytics/heatmap` | Geographic heatmap data | ADMIN/PEJABAT |
+
+### ✅ Verification Management (PEJABAT/ADMIN)
 | Method | Endpoint | Description | Request Body |
 |--------|----------|-------------|--------------|
 | GET | `/api/verification/pending` | Get pending UMKM verification tasks | - |
-| POST | `/api/verification/[id]/approve` | Approve UMKM profile | - |
-| POST | `/api/verification/[id]/reject` | Reject UMKM profile | `{ rejection_reason }` |
+| POST | `/api/verification/[id]` | Approve/reject UMKM profile | `{ action: "approve" \| "reject", rejection_reason? }` |
 
-### 🔔 Notifications (UMKM_OWNER - Cassandra)
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/notifications` | Get flag notifications for owner's UMKMs |
-| PATCH | `/api/notifications/[id]/read` | Mark notification as read |
+### 🔔 Notifications (UMKM_OWNER)
+| Method | Endpoint | Description | Request Body |
+|--------|----------|-------------|--------------|
+| GET | `/api/notifications` | Get flag notifications for owner's UMKMs | - |
+| PATCH | `/api/notifications/[id]` | Mark notification as read | - |
 
-### 📊 Dashboard (UMKM_OWNER - MongoDB + Cassandra)
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/dashboard/owner` | Get owner's UMKM profiles + financial summary |
+### 📊 Dashboard
+| Method | Endpoint | Description | Access |
+|--------|----------|-------------|--------|
+| GET | `/api/dashboard/owner` | Get owner's UMKM stats + notifications | UMKM_OWNER |
