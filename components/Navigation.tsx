@@ -34,7 +34,7 @@ export default function Navigation({
                         </div>
                         <div>
                             <span className="text-2xl font-bold text-white">SIGMA UMKM</span>
-                            <p className="text-xs text-cyan-200">Pemberdayaan UMKM Indonesia</p>
+                            <p className="text-xs text-cyan-200">Sistem Informasi Growth & Monitoring Analitik UMKM</p>
                         </div>
                     </div>
 
