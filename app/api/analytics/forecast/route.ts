@@ -113,14 +113,18 @@ export async function GET(req: NextRequest) {
               nama_usaha: umkm.nama_usaha,
               sektor: umkm.sektor,
               current_avg_omzet: Math.round(avgOmzet),
-              forecast: forecast[0], // Next month prediction
+              forecast: forecast, // Return full array, not just first element
             });
           }
         }
       }
 
-      // Sort by predicted growth
-      predictions.sort((a, b) => (b.forecast.predicted_omzet - b.current_avg_omzet) - (a.forecast.predicted_omzet - a.current_avg_omzet));
+      // Sort by predicted growth (3rd month forecast)
+      predictions.sort((a, b) => {
+        const aGrowth = a.forecast.length > 2 ? a.forecast[2].predicted_omzet - a.current_avg_omzet : 0;
+        const bGrowth = b.forecast.length > 2 ? b.forecast[2].predicted_omzet - b.current_avg_omzet : 0;
+        return bGrowth - aGrowth;
+      });
 
       return NextResponse.json({
         message: "Admin forecast analytics - Global scope",
@@ -159,7 +163,11 @@ export async function GET(req: NextRequest) {
         }
       }
 
-      predictions.sort((a, b) => (b.forecast.predicted_omzet - b.current_avg_omzet) - (a.forecast.predicted_omzet - a.current_avg_omzet));
+      predictions.sort((a, b) => {
+        const aGrowth = a.forecast.length > 2 ? a.forecast[2].predicted_omzet - a.current_avg_omzet : 0;
+        const bGrowth = b.forecast.length > 2 ? b.forecast[2].predicted_omzet - b.current_avg_omzet : 0;
+        return bGrowth - aGrowth;
+      });
 
       return NextResponse.json({
         message: "Pejabat forecast analytics - Region scope",

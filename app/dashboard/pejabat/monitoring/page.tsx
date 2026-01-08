@@ -48,9 +48,9 @@ export default function PejabatMonitoringPage() {
       (selectedStatus === 'verified' && umkm.legalitas?.status_verifikasi === 'VERIFIED') ||
       (selectedStatus === 'unverified' && umkm.legalitas?.status_verifikasi !== 'VERIFIED');
     
-    const searchMatch = umkm.nama_usaha.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      umkm.sektor.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      umkm.pemilik.nama.toLowerCase().includes(searchQuery.toLowerCase());
+    const searchMatch = umkm.nama_usaha?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      umkm.sektor?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      umkm.pemilik?.nama?.toLowerCase().includes(searchQuery.toLowerCase());
     
     return statusMatch && searchMatch;
   });
@@ -173,15 +173,15 @@ export default function PejabatMonitoringPage() {
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4 text-sm text-white/60">
                           <div>
                             <span className="text-white/50">Sektor:</span>
-                            <p className="text-white font-medium">{umkm.sektor}</p>
+                            <p className="text-white font-medium">{umkm.sektor || '-'}</p>
                           </div>
                           <div>
                             <span className="text-white/50">Lokasi:</span>
-                            <p className="text-white font-medium">{umkm.wilayah.kota}</p>
+                            <p className="text-white font-medium">{umkm.wilayah?.kota || '-'}</p>
                           </div>
                           <div>
                             <span className="text-white/50">Pemilik:</span>
-                            <p className="text-white font-medium">{umkm.pemilik.nama}</p>
+                            <p className="text-white font-medium">{umkm.pemilik?.nama || '-'}</p>
                           </div>
                           {umkm.summary_terakhir && (
                             <div>

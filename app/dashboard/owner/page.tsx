@@ -80,12 +80,12 @@ export default function OwnerDashboard() {
                 />
                 <StatsCard
                     label="Terverifikasi"
-                    value={umkms.filter(u => u.verification_status === 'APPROVED').length.toString()}
+                    value={umkms.filter(u => u.legalitas?.status_verifikasi === 'VERIFIED').length.toString()}
                     icon={<TrendingUp className="text-green-400" size={24} />}
                 />
                 <StatsCard
                     label="Menunggu Verifikasi"
-                    value={umkms.filter(u => u.verification_status === 'PENDING').length.toString()}
+                    value={umkms.filter(u => u.legalitas?.status_verifikasi === 'PENDING').length.toString()}
                     icon={<AlertCircle className="text-yellow-400" size={24} />}
                 />
             </div>

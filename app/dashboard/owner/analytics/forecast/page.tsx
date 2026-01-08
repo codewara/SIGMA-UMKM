@@ -85,7 +85,8 @@ export default function OwnerForecastAnalytics() {
         ) : (
           <div className="space-y-4">
             {predictions.slice(0, 5).map((item, idx) => {
-              const latestForecast = item.forecast[item.forecast.length - 1];
+              const forecastArray = Array.isArray(item.forecast) ? item.forecast : [];
+              const latestForecast = forecastArray.length > 0 ? forecastArray[forecastArray.length - 1] : undefined;
               const growth = calculateGrowth(item.current_avg_omzet, latestForecast?.predicted_omzet || 0);
               
               return (
@@ -123,7 +124,7 @@ export default function OwnerForecastAnalytics() {
                   <div className="border-t border-white/10 pt-2">
                     <p className="text-white/60 text-xs mb-2">Prediksi 3 Bulan</p>
                     <div className="grid grid-cols-3 gap-2">
-                      {item.forecast.map((pred, fIdx) => (
+                      {forecastArray.map((pred, fIdx) => (
                         <div key={fIdx} className="bg-white/5 rounded p-2 text-center">
                           <p className="text-white/60 text-xs">+{pred.month}bln</p>
                           <p className="text-white text-xs font-semibold">{formatCurrency(pred.predicted_omzet)}</p>

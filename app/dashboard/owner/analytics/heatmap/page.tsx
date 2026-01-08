@@ -127,4 +127,6 @@ export default function OwnerHeatmapAnalytics() {
             </div>
           </>
         )}
-
+      </div>
+    );
+  }

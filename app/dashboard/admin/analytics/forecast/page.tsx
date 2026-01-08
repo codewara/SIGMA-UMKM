@@ -69,7 +69,8 @@ export default function AdminForecastAnalytics() {
         ) : (
           <div className="space-y-4">
             {predictions.slice(0, 10).map((item, idx) => {
-              const latestForecast = item.forecast[item.forecast.length - 1];
+              const forecastArray = Array.isArray(item.forecast) ? item.forecast : [];
+              const latestForecast = forecastArray.length > 0 ? forecastArray[forecastArray.length - 1] : undefined;
               const growth = calculateGrowth(item.current_avg_omzet, latestForecast?.predicted_omzet || 0);
               
               return (
@@ -111,7 +112,7 @@ export default function AdminForecastAnalytics() {
                   <div className="border-t border-white/10 pt-4">
                     <p className="text-white/70 text-sm font-semibold mb-3">Prediksi Bulanan:</p>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                      {item.forecast.map((pred, fIdx) => (
+                      {forecastArray.map((pred, fIdx) => (
                         <div key={fIdx} className="bg-white/5 rounded-lg p-3">
                           <p className="text-white/60 text-xs">Bulan +{pred.month}</p>
                           <p className="text-white font-semibold">{formatCurrency(pred.predicted_omzet)}</p>
