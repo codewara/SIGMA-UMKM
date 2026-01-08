@@ -1,10 +1,12 @@
 'use client';
-
-import { TrendingUp } from 'lucide-react';
+import { TrendingUp, Loader } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { formatCurrency } from '@/lib/formatter';
 
 export default function PejabatGrowthAnalytics() {
-  const [growthData, setGrowthData] = useState<any[]>([]);
+  const [topGrowers, setTopGrowers] = useState<any[]>([]);
+  const [sectorGrowth, setSectorGrowth] = useState<any[]>([]);
+  const [totalUmkms, setTotalUmkms] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -14,11 +16,14 @@ export default function PejabatGrowthAnalytics() {
   const fetchGrowthData = async () => {
     try {
       setLoading(true);
-      // Fetch growth data scoped to Pejabat's region from API
       const response = await fetch('/api/analytics/growth?scope=region');
       if (response.ok) {
         const data = await response.json();
-        setGrowthData(data.data || []);
+        const { topGrowers: top, sectorGrowth: sectors, totalUmkms: total } = data.data;
+        
+        setTopGrowers(top || []);
+        setSectorGrowth(sectors || []);
+        setTotalUmkms(total || 0);
       }
     } catch (error) {
       console.error('Failed to fetch growth data:', error);
@@ -27,18 +32,9 @@ export default function PejabatGrowthAnalytics() {
     }
   };
 
-  const mockGrowthData = [
-    { region: 'Wilayah Anda', umkm: 45, growth: '+12.5%', status: 'Healthy' },
-    { region: 'Cluster A', umkm: 32, growth: '+8.3%', status: 'Growing' },
-    { region: 'Cluster B', umkm: 28, growth: '+5.2%', status: 'Stable' },
-    { region: 'Cluster C', umkm: 18, growth: '+2.1%', status: 'Emerging' },
-  ];
-
-  const topGrowth = [
-    { umkm: 'Soto Cak Har', sector: 'Kuliner', growth: 23.4, revenue: 'Rp 52M' },
-    { umkm: 'Kerajinan Indah', sector: 'Kriya', growth: 18.7, revenue: 'Rp 38M' },
-    { umkm: 'Konveksi Sejahtera', sector: 'Fashion', growth: 15.2, revenue: 'Rp 45M' },
-  ];
+  const avgGrowth = sectorGrowth.length > 0 
+    ? (sectorGrowth.reduce((sum, s) => sum + s.avg_growth, 0) / sectorGrowth.length).toFixed(1)
+    : '0';
 
   return (
     <div className="space-y-6">
@@ -48,73 +44,92 @@ export default function PejabatGrowthAnalytics() {
           <p className="text-white/70">Metrik pertumbuhan UMKM di wilayah Anda</p>
         </div>
 
-        {/* Key Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-6 hover:bg-white/20 transition-all">
-            <p className="text-white/70 text-sm">Total UMKM Wilayah</p>
-            <p className="text-3xl font-bold text-white mt-2">123</p>
-            <p className="text-green-400 text-sm mt-2">↑ +8.5% dari bulan lalu</p>
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader className="animate-spin text-white/60" size={32} />
           </div>
-
-          <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-6 hover:bg-white/20 transition-all">
-            <p className="text-white/70 text-sm">Rata-rata Pertumbuhan</p>
-            <p className="text-3xl font-bold text-white mt-2">+9.8%</p>
-            <p className="text-blue-400 text-sm mt-2">Tahun-ke-tahun</p>
-          </div>
-
-          <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-6 hover:bg-white/20 transition-all">
-            <p className="text-white/70 text-sm">Sektor Terbesar</p>
-            <p className="text-3xl font-bold text-white mt-2">Kuliner</p>
-            <p className="text-purple-400 text-sm mt-2">42 UMKM aktif</p>
-          </div>
-
-          <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-6 hover:bg-white/20 transition-all">
-            <p className="text-white/70 text-sm">Total Omzet</p>
-            <p className="text-3xl font-bold text-white mt-2">Rp 2.8T</p>
-            <p className="text-green-400 text-sm mt-2">↑ +15.3% YoY</p>
-          </div>
-        </div>
-
-        {/* Growth by Region */}
-        <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-6">
-          <h2 className="text-xl font-semibold text-white mb-4">Pertumbuhan per Cluster</h2>
-          <div className="space-y-3">
-            {mockGrowthData.map((item, idx) => (
-              <div key={idx} className="flex items-center justify-between p-4 bg-white/5 rounded-2xl hover:bg-white/10 transition-all">
-                <div className="flex-1">
-                  <p className="font-semibold text-white">{item.region}</p>
-                  <p className="text-white/60 text-sm">{item.umkm} UMKM</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-green-400 font-semibold">{item.growth}</p>
-                  <p className="text-white/60 text-sm">{item.status}</p>
-                </div>
+        ) : (
+          <>
+            {/* Key Metrics */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-6 hover:bg-white/20 transition-all">
+                <p className="text-white/70 text-sm">Total UMKM Wilayah</p>
+                <p className="text-3xl font-bold text-white mt-2">{totalUmkms}</p>
+                <p className="text-green-400 text-sm mt-2">✓ Terdata lengkap</p>
               </div>
-            ))}
-          </div>
-        </div>
 
-        {/* Top Growth UMKMs */}
-        <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-6">
-          <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-            <TrendingUp size={24} className="text-green-400" />
-            UMKM Pertumbuhan Tertinggi di Wilayah
-          </h2>
-          <div className="space-y-3">
-            {topGrowth.map((item, idx) => (
-              <div key={idx} className="flex items-center justify-between p-4 bg-white/5 rounded-2xl hover:bg-white/10 transition-all">
-                <div className="flex-1">
-                  <p className="font-semibold text-white">{item.umkm}</p>
-                  <p className="text-white/60 text-sm">{item.sector}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-blue-400 font-semibold">{item.growth}%</p>
-                  <p className="text-white/60 text-sm">{item.revenue}</p>
-                </div>
+              <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-6 hover:bg-white/20 transition-all">
+                <p className="text-white/70 text-sm">Rata-rata Pertumbuhan</p>
+                <p className="text-3xl font-bold text-white mt-2">+{avgGrowth}%</p>
+                <p className="text-blue-400 text-sm mt-2">Lintas Sektor</p>
               </div>
-            ))}
-          </div>
-        </div>
+
+              <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-6 hover:bg-white/20 transition-all">
+                <p className="text-white/70 text-sm">Sektor Terbesar</p>
+                <p className="text-3xl font-bold text-white mt-2">{sectorGrowth.length > 0 ? sectorGrowth[0].sektor : 'N/A'}</p>
+                <p className="text-purple-400 text-sm mt-2">{sectorGrowth.length > 0 ? sectorGrowth[0].umkm_count : 0} UMKM aktif</p>
+              </div>
+
+              <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-6 hover:bg-white/20 transition-all">
+                <p className="text-white/70 text-sm">Sektor Pertumbuhan Tertinggi</p>
+                <p className="text-3xl font-bold text-white mt-2">{sectorGrowth.length > 0 ? `+${sectorGrowth[0].avg_growth}%` : 'N/A'}</p>
+                <p className="text-green-400 text-sm mt-2">📈 {sectorGrowth.length > 0 ? sectorGrowth[0].sektor : ''}</p>
+              </div>
+            </div>
+
+            {/* Growth by Sector */}
+            <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-6">
+              <h2 className="text-xl font-semibold text-white mb-4">Pertumbuhan per Sektor</h2>
+              {sectorGrowth.length === 0 ? (
+                <p className="text-white/60 text-center py-8">Belum ada data pertumbuhan</p>
+              ) : (
+                <div className="space-y-3">
+                  {sectorGrowth.map((item, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-4 bg-white/5 rounded-2xl hover:bg-white/10 transition-all">
+                      <div className="flex-1">
+                        <p className="font-semibold text-white">{item.sektor}</p>
+                        <p className="text-white/60 text-sm">{item.umkm_count} UMKM</p>
+                      </div>
+                      <div className="text-right">
+                        <p className={`font-semibold ${item.avg_growth >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                          {item.avg_growth >= 0 ? '+' : ''}{item.avg_growth.toFixed(1)}%
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Top Growth UMKMs */}
+            <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-6">
+              <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+                <TrendingUp size={24} className="text-green-400" />
+                UMKM Pertumbuhan Tertinggi di Wilayah
+              </h2>
+              {topGrowers.length === 0 ? (
+                <p className="text-white/60 text-center py-8">Belum ada data pertumbuhan UMKM</p>
+              ) : (
+                <div className="space-y-3">
+                  {topGrowers.slice(0, 10).map((item, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-4 bg-white/5 rounded-2xl hover:bg-white/10 transition-all">
+                      <div className="flex-1">
+                        <p className="font-semibold text-white">{item.nama_usaha}</p>
+                        <p className="text-white/60 text-sm">{item.sektor}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className={`font-semibold ${item.growth_rate >= 0 ? 'text-blue-400' : 'text-red-400'}`}>
+                          {item.growth_rate >= 0 ? '+' : ''}{item.growth_rate}%
+                        </p>
+                        <p className="text-white/60 text-sm">{formatCurrency(item.latest_omzet)}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </div>
   );
 }
