@@ -49,7 +49,7 @@ export default function LoginPage() {
             <span className="text-white text-2xl font-black">Σ</span>
           </div>
           <h1 className="text-4xl font-black text-white mb-2 tracking-tight">SIGMA UMKM</h1>
-          <p className="text-white/70 text-sm">Sistem Monitoring Pendapatan UMKM SDG 8</p>
+          <p className="text-white/70 text-sm">Sistem Informasi Growth & Monitoring Analitik UMKM</p>
         </div>
 
         {/* Login Card */}

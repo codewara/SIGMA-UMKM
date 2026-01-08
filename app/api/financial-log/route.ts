@@ -117,7 +117,7 @@ export async function GET(req: NextRequest) {
 
         // Query financial logs by UMKM and year
         const query = `
-            SELECT umkm_id, tahun, bulan, omzet, jumlah_karyawan, tanggal_input, catatan, is_flagged, flag_reason
+            SELECT umkm_id, tahun, bulan, omzet, jumlah_karyawan, tanggal_input, is_flagged, flag_reason, catatan
             FROM sigma_ks.umkm_financial_log
             WHERE umkm_id = ? AND tahun = ?
             ORDER BY bulan DESC
