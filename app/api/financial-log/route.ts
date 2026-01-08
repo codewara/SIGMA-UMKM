@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
         // Insert into Cassandra
         const query = `
             INSERT INTO sigma_ks.umkm_financial_log 
-            (umkm_id, tahun, bulan, omzet, jumlah_karyawan, tanggal_input, is_flagged)
+            (umkm_id, tahun, bulan, omzet, jumlah_karyawan, tgl_input, is_flagged)
             VALUES (?, ?, ?, ?, ?, ?, ?)
         `;
 
@@ -117,7 +117,7 @@ export async function GET(req: NextRequest) {
 
         // Query financial logs by UMKM and year
         const query = `
-            SELECT umkm_id, tahun, bulan, omzet, jumlah_karyawan, tanggal_input, is_flagged, flag_reason, catatan
+            SELECT umkm_id, tahun, bulan, omzet, jumlah_karyawan, tgl_input, is_flagged, flag_reason
             FROM sigma_ks.umkm_financial_log
             WHERE umkm_id = ? AND tahun = ?
             ORDER BY bulan DESC
