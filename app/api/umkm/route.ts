@@ -28,7 +28,6 @@ export async function GET(req: NextRequest) {
 
     // UMKM_OWNER: Show only their own UMKMs (all statuses)
     if (user && user.role === "UMKM_OWNER") {
-        // @ts-expect-error cast user._id string to UUID for comparison
         const filter: any = { owner_id: new UUID(user._id), is_deleted: false };
 
         // Apply filters
@@ -116,7 +115,6 @@ export async function POST(req: NextRequest) {
 
         // Set ownership and verification status based on role
         const newUmkm = {
-            // @ts-expect-error cast _id to UUID
             _id: newId,
             ...parsed,
             owner_id: user.role === "UMKM_OWNER" ? user._id : parsed.owner_id || null,
