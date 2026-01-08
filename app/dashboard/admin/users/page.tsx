@@ -24,6 +24,7 @@ export default function UsersPage() {
     nama: '',
     password: '',
     wilayah: '',
+    role: 'PEJABAT' as 'PEJABAT' | 'ADMIN',
   });
 
   useEffect(() => {
@@ -68,7 +69,7 @@ export default function UsersPage() {
       }
 
       setSuccess('Pengguna berhasil dibuat');
-      setFormData({ email: '', nama: '', password: '', wilayah: '' });
+      setFormData({ email: '', nama: '', password: '', wilayah: '', role: 'PEJABAT' });
       setShowForm(false);
       
       // Refresh list
@@ -104,9 +105,9 @@ export default function UsersPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white">Kelola Pejabat</h1>
+          <h1 className="text-3xl font-bold text-white">Kelola Pengguna</h1>
           <p className="text-white/70 mt-1">
-            Tambah, lihat, dan kelola akun pejabat dinas
+            Tambah, lihat, dan kelola akun pejabat dan admin
           </p>
         </div>
         <button
@@ -114,7 +115,7 @@ export default function UsersPage() {
           className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full hover:shadow-lg transition-all duration-300 font-semibold"
         >
           <Plus size={20} />
-          Tambah Pejabat
+          Tambah Pengguna
         </button>
       </div>
 
@@ -140,8 +141,37 @@ export default function UsersPage() {
       {/* Add Form */}
       {showForm && (
         <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-6 space-y-4">
-          <h2 className="text-lg font-semibold text-white">Tambah Pejabat Baru</h2>
+          <h2 className="text-lg font-semibold text-white">Tambah Pengguna Baru</h2>
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-white/90 mb-2">
+                Tipe Pengguna *
+              </label>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="role"
+                    value="PEJABAT"
+                    checked={formData.role === 'PEJABAT'}
+                    onChange={e => setFormData({ ...formData, role: e.target.value as 'PEJABAT' | 'ADMIN' })}
+                    className="w-4 h-4"
+                  />
+                  <span className="text-white">Pejabat Dinas</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="role"
+                    value="ADMIN"
+                    checked={formData.role === 'ADMIN'}
+                    onChange={e => setFormData({ ...formData, role: e.target.value as 'PEJABAT' | 'ADMIN' })}
+                    className="w-4 h-4"
+                  />
+                  <span className="text-white">Admin Sistem</span>
+                </label>
+              </div>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-white/90 mb-1">
@@ -155,7 +185,7 @@ export default function UsersPage() {
                     setFormData({ ...formData, email: e.target.value })
                   }
                   className="w-full px-4 py-2 bg-white/20 border border-white/30 rounded-xl text-white placeholder-white/50 focus:ring-2 focus:ring-blue-400 focus:border-transparent backdrop-blur-xl transition-all"
-                  placeholder="pejabat@dinas.com"
+                  placeholder="user@dinas.com"
                 />
               </div>
               <div>
@@ -169,7 +199,7 @@ export default function UsersPage() {
                     setFormData({ ...formData, nama: e.target.value })
                   }
                   className="w-full px-4 py-2 bg-white/20 border border-white/30 rounded-xl text-white placeholder-white/50 focus:ring-2 focus:ring-blue-400 focus:border-transparent backdrop-blur-xl transition-all"
-                  placeholder="Nama Pejabat"
+                  placeholder="Nama Lengkap"
                 />
               </div>
               <div>
@@ -187,20 +217,22 @@ export default function UsersPage() {
                   placeholder="Minimal 6 karakter"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-white/90 mb-1">
-                  Wilayah
-                </label>
-                <input
-                  type="text"
-                  value={formData.wilayah}
-                  onChange={e =>
-                    setFormData({ ...formData, wilayah: e.target.value })
-                  }
-                  className="w-full px-4 py-2 bg-white/20 border border-white/30 rounded-xl text-white placeholder-white/50 focus:ring-2 focus:ring-blue-400 focus:border-transparent backdrop-blur-xl transition-all"
-                  placeholder="Malang, Surabaya, dll"
-                />
-              </div>
+              {formData.role === 'PEJABAT' && (
+                <div>
+                  <label className="block text-sm font-medium text-white/90 mb-1">
+                    Wilayah
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.wilayah}
+                    onChange={e =>
+                      setFormData({ ...formData, wilayah: e.target.value })
+                    }
+                    className="w-full px-4 py-2 bg-white/20 border border-white/30 rounded-xl text-white placeholder-white/50 focus:ring-2 focus:ring-blue-400 focus:border-transparent backdrop-blur-xl transition-all"
+                    placeholder="Malang, Surabaya, dll"
+                  />
+                </div>
+              )}
             </div>
             <div className="flex gap-3">
               <button
@@ -232,6 +264,9 @@ export default function UsersPage() {
                 </th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-white">
                   Nama
+                </th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-white">
+                  Role
                 </th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-white">
                   Status
@@ -268,6 +303,17 @@ export default function UsersPage() {
                     </td>
                     <td className="px-6 py-4 text-sm text-white/70">
                       {user.nama || '-'}
+                    </td>
+                    <td className="px-6 py-4 text-sm">
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                          user.role === 'ADMIN'
+                            ? 'bg-purple-500/30 text-purple-300 border border-purple-400/50'
+                            : 'bg-blue-500/30 text-blue-300 border border-blue-400/50'
+                        }`}
+                      >
+                        {user.role}
+                      </span>
                     </td>
                     <td className="px-6 py-4 text-sm">
                       <span

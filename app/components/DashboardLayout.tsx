@@ -103,7 +103,7 @@ export default function DashboardLayout({
       },
       {
         href: '/dashboard/admin/users',
-        label: 'Kelola Pejabat',
+        label: 'Kelola Pejabat & Admin',
         icon: Users,
       },
       // Analytics Section (Divider)

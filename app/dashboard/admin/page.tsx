@@ -1,9 +1,72 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { BarChart3, Users, Lock, AlertCircle, Clock } from 'lucide-react';
 import Link from 'next/link';
 
+interface AdminStats {
+    totalPejabat: number;
+    totalAdmin: number;
+    totalUMKM: number;
+    pendingVerification: number;
+}
+
 export default function AdminDashboard() {
+    const [stats, setStats] = useState<AdminStats>({
+        totalPejabat: 0,
+        totalAdmin: 0,
+        totalUMKM: 0,
+        pendingVerification: 0,
+    });
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetchStats();
+    }, []);
+
+    const fetchStats = async () => {
+        try {
+            setLoading(true);
+            const [usersRes, umkmRes, pendingRes] = await Promise.all([
+                fetch('/api/admin/users'),
+                fetch('/api/umkm'),
+                fetch('/api/umkm/pending')
+            ]);
+
+            let totalPejabat = 0;
+            let totalAdmin = 0;
+            let totalUMKM = 0;
+            let pendingVerification = 0;
+
+            if (usersRes.ok) {
+                const usersData = await usersRes.json();
+                const usersList = usersData.users || [];
+                totalPejabat = usersList.filter((u: any) => u.role === 'PEJABAT').length;
+                totalAdmin = usersList.filter((u: any) => u.role === 'ADMIN').length;
+            }
+
+            if (umkmRes.ok) {
+                const umkmData = await umkmRes.json();
+                totalUMKM = umkmData.data?.length || 0;
+            }
+
+            if (pendingRes.ok) {
+                const pendingData = await pendingRes.json();
+                pendingVerification = pendingData.umkm?.length || 0;
+            }
+
+            setStats({
+                totalPejabat,
+                totalAdmin,
+                totalUMKM,
+                pendingVerification,
+            });
+        } catch (error) {
+            console.error('Failed to fetch stats:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
     return (
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                 {/* Header */}
@@ -46,23 +109,23 @@ export default function AdminDashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
                     <StatsCard
                         label="Total Pejabat"
-                        value="0"
+                        value={stats.totalPejabat.toString()}
                         icon={<Users className="text-blue-400" size={24} />}
                     />
                     <StatsCard
+                        label="Total Admin"
+                        value={stats.totalAdmin.toString()}
+                        icon={<Lock className="text-purple-400" size={24} />}
+                    />
+                    <StatsCard
                         label="Total UMKM"
-                        value="0"
+                        value={stats.totalUMKM.toString()}
                         icon={<BarChart3 className="text-green-400" size={24} />}
                     />
                     <StatsCard
                         label="Verifikasi Pending"
-                        value="0"
+                        value={stats.pendingVerification.toString()}
                         icon={<Clock className="text-yellow-400" size={24} />}
-                    />
-                    <StatsCard
-                        label="Data Tercurigai"
-                        value="0"
-                        icon={<AlertCircle className="text-red-400" size={24} />}
                     />
                 </div>
 

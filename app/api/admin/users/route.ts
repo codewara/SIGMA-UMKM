@@ -1,6 +1,6 @@
 /**
- * GET /api/admin/users - List all PEJABAT users
- * POST /api/admin/users - Create new PEJABAT user
+ * GET /api/admin/users - List all PEJABAT and ADMIN users
+ * POST /api/admin/users - Create new PEJABAT or ADMIN user
  * DELETE /api/admin/users/[id] - Delete user
  */
 
@@ -21,14 +21,14 @@ export async function GET(request: NextRequest) {
     const db = await connectMongo();
     const usersCollection = db.collection('users');
 
-    // Fetch all PEJABAT users
-    const pejabats = await usersCollection
-      .find({ role: 'PEJABAT' })
+    // Fetch all PEJABAT and ADMIN users
+    const users = await usersCollection
+      .find({ role: { $in: ['PEJABAT', 'ADMIN'] } })
       .project({ password_hash: 0 }) // Don't expose password
       .sort({ created_at: -1 })
       .toArray();
 
-    return NextResponse.json({ users: pejabats });
+    return NextResponse.json({ users });
   } catch (error) {
     console.error('GET /api/admin/users error:', error);
     return NextResponse.json(
@@ -46,12 +46,20 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { email, password, nama, wilayah } = body;
+    const { email, password, nama, wilayah, role = 'PEJABAT' } = body;
 
     // Validation
     if (!email || !password) {
       return NextResponse.json(
         { error: 'Email dan password diperlukan' },
+        { status: 400 }
+      );
+    }
+
+    // Validate role
+    if (!['PEJABAT', 'ADMIN'].includes(role)) {
+      return NextResponse.json(
+        { error: 'Role harus PEJABAT atau ADMIN' },
         { status: 400 }
       );
     }
@@ -76,10 +84,10 @@ export async function POST(request: NextRequest) {
       _id: new UUID(uuidv4()),
       email,
       password_hash: passwordHash,
-      role: 'PEJABAT',
+      role,
       account_status: 'active',
       nama: nama || email.split('@')[0],
-      wilayah: wilayah || null,
+      wilayah: role === 'PEJABAT' ? (wilayah || null) : null,
       created_at: new Date(),
     };
 
