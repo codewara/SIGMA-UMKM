@@ -8,12 +8,7 @@ export async function GET(request: NextRequest) {
 
         // Verify Email
         await verifyEmail(token);
-        return NextResponse.json({ message: "Email verified successfully" });
+        return NextResponse.json({ message: "Email berhasil diverifikasi!" });
     }
-    catch (error) {
-        if (error instanceof Error && error.message === "INVALID_TOKEN") {
-            return NextResponse.json({ error: "Invalid or expired token" }, { status: 400 });
-        }
-        return NextResponse.json({ error: "Internal Server Error", errorm: error }, { status: 500 });
-    }
+    catch { return NextResponse.json({ message: "Token invalid atau kadaluarsa!" }); }
 }
